@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>practice - still stalker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="demo2.css">
+    <style>
+    /* Add fade-up animations */
+.fade-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.8s ease forwards;
+}
+
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Improve practice container layout */
+.practice-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding: 0 5%;
+    margin: 2rem auto;
+    max-width: 1400px;
+}
+
+/* Style editor and output sections */
+.editor-section, .output-section {
+    background: rgba(20, 15, 40, 0.8);
+    backdrop-filter: blur(15px);
+    border: 3px solid rgba(255, 215, 140, 0.4);
+    border-radius: 40px;
+    padding: 1.8rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.editor-section:hover, .output-section:hover {
+    border-color: #ffbc6e;
+    box-shadow: 0 20px 50px rgba(255, 188, 110, 0.2);
+}
+
+/* Section header */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+    color: #ffddaa;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Run button */
+.run-btn {
+    background: linear-gradient(145deg, #2e4eb0, #4f73f5);
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 40px;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.run-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(79, 115, 245, 0.4);
+    background: linear-gradient(145deg, #3a5ed0, #5f88ff);
+}
+
+.run-btn.clear {
+    background: linear-gradient(145deg, #aa2e2e, #c74f4f);
+}
+
+.run-btn.clear:hover {
+    background: linear-gradient(145deg, #c73a3a, #d65f5f);
+    box-shadow: 0 10px 25px rgba(199, 55, 55, 0.4);
+}
+
+/* Language tabs */
+.language-tabs {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.lang-tab {
+    background: rgba(28, 38, 70, 0.8);
+    border: 2px solid rgba(95, 122, 192, 0.5);
+    color: #b7c7ff;
+    padding: 0.6rem 1.5rem;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.lang-tab:hover {
+    border-color: #ffbc6e;
+    color: #ffddaa;
+    transform: translateY(-2px);
+}
+
+.lang-tab.active {
+    background: linear-gradient(145deg, #2e4eb0, #4f73f5);
+    border-color: #ffbc6e;
+    color: white;
+    box-shadow: 0 5px 15px rgba(79, 115, 245, 0.3);
+}
+
+/* Code editor */
+.code-editor {
+    width: 100%;
+    min-height: 400px;
+    background: #0a0f1f;
+    border: 2px solid rgba(95, 122, 192, 0.5);
+    border-radius: 20px;
+    padding: 1.2rem;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.code-editor:focus {
+    outline: none;
+    border-color: #ffbc6e;
+    box-shadow: 0 0 20px rgba(255, 188, 110, 0.2);
+}
+
+/* Output frame */
+.output-frame {
+    width: 100%;
+    min-height: 400px;
+    background: white;
+    border: 2px solid rgba(95, 122, 192, 0.5);
+    border-radius: 20px;
+    padding: 1.2rem;
+    color: #333;
+    margin-top: 1rem;
+    overflow: auto;
+}
+
+/* Challenge section */
+.challenge-section {
+    margin-top: 3rem;
+    padding: 0 5%;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.challenge-card {
+    background: rgba(20, 15, 40, 0.8);
+    backdrop-filter: blur(15px);
+    border: 3px solid rgba(255, 215, 140, 0.4);
+    border-radius: 40px;
+    padding: 2rem;
+}
+
+.challenge-card h3 {
+    color: #ffddaa;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.challenge-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+}
+
+.challenge-item {
+    background: rgba(28, 38, 70, 0.7);
+    border: 2px solid rgba(95, 122, 192, 0.5);
+    border-radius: 25px;
+    padding: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.challenge-item:hover {
+    transform: translateY(-5px);
+    border-color: #ffbc6e;
+    box-shadow: 0 10px 25px rgba(255, 188, 110, 0.2);
+    background: rgba(38, 48, 85, 0.8);
+}
+
+.challenge-item h4 {
+    color: #ffddaa;
+    font-size: 1.2rem;
+    margin: 0 0 0.8rem 0;
+}
+
+.difficulty {
+    display: inline-block;
+    padding: 0.3rem 1rem;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.difficulty.easy {
+    background: #2e7d5a;
+    color: white;
+    box-shadow: 0 0 10px rgba(46, 125, 90, 0.5);
+}
+
+.difficulty.medium {
+    background: #f57c00;
+    color: white;
+    box-shadow: 0 0 10px rgba(245, 124, 0, 0.5);
+}
+
+/* Responsive design */
+@media screen and (max-width: 900px) {
+    .practice-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .practice-header h1 {
+        font-size: 2.5rem;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .language-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+    </style>
+</head>
+    <body>
+        <div class="nebula"></div>
+        <div class="grid-lines"></div>
+        <div class="stars-container">
+            <div class="star" style="left: 3%; top: 8%; animation-delay: 0s; width: 5px; height: 5px;"></div>
+            <div class="star" style="left: 8%; top: 25%; animation-delay: 0.3s; width: 4px; height: 4px;"></div>
+            <div class="star" style="left: 12%; top: 42%; animation-delay: 0.6s; width: 6px; height: 6px;"></div>
+            <div class="star" style="left: 18%; top: 5%; animation-delay: 0.9s; width: 5px; height: 5px;"></div>
+            <div class="star" style="left: 23%; top: 55%; animation-delay: 1.2s; width: 4px; height: 4px;"></div>
+            <div class="star" style="left: 28%; top: 18%; animation-delay: 1.5s; width: 7px; height: 7px;"></div>
+            <div class="star" style="left: 33%; top: 35%; animation-delay: 1.8s; width: 5px; height: 5px;"></div>
+            <div class="star" style="left: 38%; top: 62%; animation-delay: 2.1s; width: 4px; height: 4px;"></div>
+            <div class="star" style="left: 43%; top: 12%; animation-delay: 2.4s; width: 6px; height: 6px;"></div>
+            <div class="star" style="left: 48%; top: 45%; animation-delay: 0.2s; width: 5px; height: 5px;"></div>
+            <div class="star" style="left: 53%; top: 28%; animation-delay: 0.5s; width: 4px; height: 4px;"></div>
+            <div class="star" style="left: 58%; top: 8%; animation-delay: 0.8s; width: 7px; height: 7px;"></div>
+            <div class="star" style="left: 63%; top: 52%; animation-delay: 1.1s; width: 5px; height: 5px;"></div>
+            <div class="star" style="left: 68%; top: 22%; animation-delay: 1.4s; width: 4px; height: 4px;"></div>
+            <div class="star" style="left: 73%; top: 38%; animation-delay: 1.7s; width: 6px; height: 6px;"></div>
+            <div class="star" style="left: 78%; top: 65%; animation-delay: 2s; width: 5px; height: 5px;"></div>
+            <div class="star" style="left: 83%; top: 15%; animation-delay: 2.3s; width: 4px; height: 4px;"></div>
+            <div class="star" style="left: 88%; top: 48%; animation-delay: 0.4s; width: 7px; height: 7px;"></div>
+            <div class="star" style="left: 93%; top: 32%; animation-delay: 0.7s; width: 5px; height: 5px;"></div>
+            <div class="star" style="left: 97%; top: 58%; animation-delay: 1s; width: 4px; height: 4px;"></div>
+        </div>
+        <div class="particles">
+            <div class="particle"
+                style="left: 5%; animation-duration: 15s; animation-delay: 0s; width: 12px; height: 12px;"></div>
+            <div class="particle" style="left: 10%; animation-duration: 18s; animation-delay: 1s; width: 8px; height: 8px;">
+            </div>
+            <div class="particle"
+                style="left: 15%; animation-duration: 12s; animation-delay: 2s; width: 14px; height: 14px;"></div>
+            <div class="particle"
+                style="left: 20%; animation-duration: 20s; animation-delay: 3s; width: 10px; height: 10px;"></div>
+            <div class="particle"
+                style="left: 25%; animation-duration: 16s; animation-delay: 0.5s; width: 16px; height: 16px;"></div>
+            <div class="particle"
+                style="left: 30%; animation-duration: 14s; animation-delay: 1.5s; width: 9px; height: 9px;"></div>
+            <div class="particle"
+                style="left: 35%; animation-duration: 17s; animation-delay: 2.5s; width: 11px; height: 11px;"></div>
+            <div class="particle"
+                style="left: 40%; animation-duration: 19s; animation-delay: 3.5s; width: 15px; height: 15px;"></div>
+        </div>
+        <div class="shooting-star" style="top: 20%; animation-delay: 3s;"></div>
+        <div class="bg-aura"></div>
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+        <div class="orb orb4"></div>
+        <div class="orb orb5"></div>
+    <main>
+        <section class="practice-header">
+            <h1><i class="fas fa-code"></i> Code Practice</h1>
+            <p>Practice coding challenges</p>
+        </section>
+        <section class="practice-container">
+            <div class="editor-section">
+                <div class="section-header">
+                    <h3>Code Editor</h3>
+                    <button class="run-btn" onclick="runCode()">Run</button>
+                </div>
+                <div class="language-tabs">
+                    <button class="lang-tab active" data-lang="html" onclick="switchLanguage('html')">HTML</button>
+                    <button class="lang-tab" data-lang="css" onclick="switchLanguage('css')">CSS</button>
+                    <button class="lang-tab" data-lang="js" onclick="switchLanguage('js')">JavaScript</button>
+                </div>
+                <textarea class="code-editor" id="codeEditor"></textarea>
+            </div>
+            <div class="output-section">
+                <h3>Output</h3>
+                <button class="run-btn" onclick="clearOutput()" style="background: #c62828;">Clear</button>
+                <div class="output-frame" id="outputFrame"></div>
+            </div>
+        </section>
+        <section class="challenge-section">
+            <div class="challenge-card">
+                <h3>Practice Challenges</h3>
+                <div class="challenge-list">
+                    <div class="challenge-item" onclick="loadChallenge('html', '<h1>Hello</h1>')">
+                        <h4>Hello World</h4>
+                        <span class="difficulty easy">Easy</span>
+                    </div>
+                    <div class="challenge-item" onclick="loadChallenge('css', 'h1 { color: blue; }')">
+                        <h4>Style Heading</h4>
+                        <span class="difficulty easy">Easy</span>
+                    </div>
+                    <div class="challenge-item" onclick="loadChallenge('css', '.card { background: lightblue; }')">
+                        <h4>Card Style</h4>
+                        <span class="difficulty medium">Medium</span>
+                    </div>
+                    <div class="challenge-item" onclick="loadChallenge('js', 'alert(1)')">
+                        <h4>Alert</h4>
+                        <span class="difficulty easy">Easy</span>
+                    </div>
+                    <div class="challenge-item" onclick="loadChallenge('js', 'console.log(1)')">
+                        <h4>Console</h4>
+                        <span class="difficulty easy">Easy</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p><i class="fas fa-skull"></i> still stalker · day 1 → 30 · 2026 full year <i class="fas fa-skull"></i></p>
+        <p><i class="fas fa-calendar"></i> 12 months · 7 days a week · every footprint counts</p>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var currentLanguage = 'html';
+            var defaultCode = {
+                html: '<h1>Hello World!</h1>\n<p>This is HTML output</p>',
+                css: 'body { background: #f0f0f0; }\nh1 { color: #4f73f5; text-align: center; }',
+                js: '// JavaScript code\nfunction greet() {\n  alert("Hello from JavaScript!");\n}\ngreet();'
+            };
+
+            // Initialize editor
+            const editor = document.getElementById('codeEditor');
+            editor.value = defaultCode.html;
+
+            // Switch language function
+            window.switchLanguage = function (lang) {
+                currentLanguage = lang;
+                document.querySelectorAll('.lang-tab').forEach(function (tab) {
+                    tab.classList.remove('active');
+                    if (tab.getAttribute('data-lang') === lang) {
+                        tab.classList.add('active');
+                    }
+                });
+                editor.value = defaultCode[lang];
+            };
+
+            // Run code function
+            window.runCode = function () {
+                var code = editor.value;
+                var outputFrame = document.getElementById('outputFrame');
+
+                if (currentLanguage === 'html') {
+                    outputFrame.innerHTML = code;
+                }
+                else if (currentLanguage === 'css') {
+                    outputFrame.innerHTML = `
+                        <div style="padding: 20px; background: #f5f5f5;">
+                            <style>${code}</style>
+                            <h1>CSS Heading</h1>
+                            <p>This is a paragraph with applied CSS</p>
+                            <div style="margin-top: 20px; color: #666;">CSS is working!</div>
+                        </div>
+                    `;
+                }
+                else if (currentLanguage === 'js') {
+                    try {
+                        // Create a safe eval
+                        const result = eval(code);
+                        outputFrame.innerHTML = `
+                            <div style="padding: 20px; background: #f5f5f5;">
+                                <p style="color: #2e7d5a;">✓ JavaScript executed successfully!</p>
+                                <pre style="background: #e8e8e8; padding: 10px; border-radius: 8px;">${code}</pre>
+                                <p>Result: ${result !== undefined ? result : 'undefined'}</p>
+                            </div>
+                        `;
+                    } catch (e) {
+                        outputFrame.innerHTML = `
+                            <div style="padding: 20px; background: #fff1f1;">
+                                <p style="color: #c62828;">✗ Error: ${e.message}</p>
+                                <pre style="background: #ffe0e0; padding: 10px; border-radius: 8px;">${code}</pre>
+                            </div>
+                        `;
+                    }
+                }
+            };
+
+            // Clear output function
+            window.clearOutput = function () {
+                document.getElementById('outputFrame').innerHTML = '';
+            };
+
+            // Load challenge function
+            window.loadChallenge = function (lang, code) {
+                currentLanguage = lang;
+                document.querySelectorAll('.lang-tab').forEach(function (tab) {
+                    tab.classList.remove('active');
+                    if (tab.getAttribute('data-lang') === lang) {
+                        tab.classList.add('active');
+                    }
+                });
+                editor.value = code;
+                runCode();
+            };
+
+            // Add keyboard shortcut (Ctrl+Enter to run)
+            editor.addEventListener('keydown', function (e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    runCode();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
