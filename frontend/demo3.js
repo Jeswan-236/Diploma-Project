@@ -28,7 +28,7 @@
             { topic: 'functions', difficulty: 'easy' },
             { topic: 'arrays & loops', difficulty: 'easy' },
             { topic: 'DOM intro', difficulty: 'medium' },
-            { topic: 'events', difficulty: 'mediuinm' },
+            { topic: 'events', difficulty: 'medium' },
             { topic: 'async JS', difficulty: 'hard' },
             { topic: 'fetch API', difficulty: 'hard' },
             { topic: 'classes', difficulty: 'medium' },
@@ -387,22 +387,11 @@
         'Project': '<i class="fas fa-code-branch"></i>' 
     };
 
-    // Load streak overrides from localStorage (keys: 1..n -> status)
-    const savedStreak = (function(){ try { return JSON.parse(localStorage.getItem('streakDays')||'{}'); } catch(e){ return {}; } })();
+// Load streak overrides from localStorage (keys: 1..n -> status)
+const JWT = localStorage.getItem('jwt') || '';
+const savedStreak = (function(){ try { return JSON.parse(localStorage.getItem('streakDays')||'{}'); } catch(e){ return {}; } })();
 
-if (grid) {
-        topics.forEach((item, index) => {
-            const dayNum = index + 1;
-            const status = savedStreak[dayNum] || item.status;
-            const day = document.createElement('div');
-            day.className = `day-circle ${status}`;
-            day.setAttribute('data-tooltip', `${item.lang}: ${item.topic}`);
-            day.setAttribute('data-day-num', String(dayNum));
-            day.innerHTML = `${dayNum}<span>${item.lang}</span>`;
-            grid.appendChild(day);
-        });
-        updateStreakCounter();
-    }
+if (grid && JWT) {\n        try {\n            const resp = await fetch('/streak', {\n                headers: { 'Authorization': `Bearer ${JWT}` }\n            });\n            const days = await resp.json();\n            // render from API data\n            days.forEach(day => {\n                const dayEl = document.querySelector(`[data-day-num="${day.day_number}"]`);\n                if(dayEl) dayEl.className = `day-circle ${day.status}`;\n            });\n        } catch(e){\n            console.log('API load failed, using local:', e);\n        }\n    } else {\n        // local fallback\n        topics.forEach((item, index) => {\n            const dayNum = index + 1;\n            const status = savedStreak[dayNum] || item.status;\n            const day = document.createElement('div');\n            day.className = `day-circle ${status}`;\n            day.setAttribute('data-tooltip', `${item.lang}: ${item.topic}`);\n            day.setAttribute('data-day-num', String(dayNum));\n            day.innerHTML = `${dayNum}<span>${item.lang}</span>`;\n            grid.appendChild(day);\n        });\n    }\n    updateStreakCounter();
 
 // Expose helper to mark the next incomplete streak day as completed
 window.completeNextStreakDay = function() {
