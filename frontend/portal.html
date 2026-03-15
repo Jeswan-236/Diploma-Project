@@ -159,7 +159,21 @@
                 });
             }
 
-loginBtn.addEventListener('click', async ()=>{\n                const u = (usr.value||'').trim();\n                const p = (pwd.value||'').trim();\n                if(!u || !p) return showToast('Enter username/password');\n\n                card.classList.add('loading');\n                try {\n                    const resp = await fetch('/auth/login', {\n                        method: 'POST',\n                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},\n                        body: new URLSearchParams({username: u, password: p})\n                    });\n                    const data = await resp.json();\n                    if(resp.ok && data.access_token){\n                        localStorage.setItem('jwt', data.access_token);\n                        localStorage.setItem('user', u);\n                        showToast('Login success!');\n                        setTimeout(()=> location.href = 'demo.html', 900);\n                    } else {\n                        showToast(data.detail || 'Login failed');\n                    }\n                } catch(e){\n                    showToast('Server error: ' + e.message);\n                }\n                card.classList.remove('loading');\n            });
+            loginBtn.addEventListener('click', ()=>{
+                const u = (usr.value||'').trim();
+                const p = (pwd.value||'').trim();
+                if(u === 'student' && p === '2026'){
+                    card.classList.add('success');
+                    showToast('Welcome — signing in...');
+                    try{ localStorage.setItem('ss_remember', JSON.stringify({ username: remember.checked?u:'', remember: remember.checked })); }catch(e){}
+                    setTimeout(()=> location.href = 'demo.html', 900);
+                } else {
+                    card.classList.remove('success');
+                    card.classList.add('shake');
+                    showToast('Incorrect username or password');
+                    setTimeout(()=> card.classList.remove('shake'), 600);
+                }
+            });
 
             document.getElementById('googleLogin').addEventListener('click', ()=> showToast('Google sign-in not configured in demo'));
             document.getElementById('phoneLogin').addEventListener('click', ()=> showToast('Phone sign-in not configured in demo'));
@@ -202,4 +216,3 @@ loginBtn.addEventListener('click', async ()=>{\n                const u = (usr.v
     </style>
 </body>
 </html>
-
