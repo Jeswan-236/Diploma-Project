@@ -390,7 +390,7 @@
     // Load streak overrides from localStorage (keys: 1..n -> status)
     const savedStreak = (function(){ try { return JSON.parse(localStorage.getItem('streakDays')||'{}'); } catch(e){ return {}; } })();
 
-    if (grid) {
+if (grid) {
         topics.forEach((item, index) => {
             const dayNum = index + 1;
             const status = savedStreak[dayNum] || item.status;
@@ -401,16 +401,18 @@
             day.innerHTML = `${dayNum}<span>${item.lang}</span>`;
             grid.appendChild(day);
         });
+        updateStreakCounter();
     }
 
 // Expose helper to mark the next incomplete streak day as completed
-    window.completeNextStreakDay = function() {
+window.completeNextStreakDay = function() {
         try {
             const stored = JSON.parse(localStorage.getItem('streakDays') || '{}');
             for (let i = 1; i <= topics.length; i++) {
                 if (stored[i] !== 'completed' && topics[i-1]) {
                     stored[i] = 'completed';
                     localStorage.setItem('streakDays', JSON.stringify(stored));
+                    updateStreakCounter();
                     return i;
                 }
             }
@@ -420,13 +422,69 @@
         return null;
     };
 
+// Helper functions
+    function updateStreakCounter() {
+        const counter = document.getElementById('streakCounter');
+        if (!counter) return;
+        try {
+            const saved = JSON.parse(localStorage.getItem('streakDays') || '{}');
+            let streak = 0;
+            for (let i = 1; i <= 30; i++) {
+                if (saved[i] === 'completed') {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+            counter.textContent = streak;
+        } catch (e) {
+            console.error('Could not update streak counter', e);
+            counter.textContent = '0';
+        }
+    }
+
+    function showStreakToast(msg, isSuccess = false) {
+        let toast = document.getElementById('streakToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'streakToast';
+            toast.className = 'toast-popup';
+            document.body.appendChild(toast);
+        }
+        toast.innerHTML = `<i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> ${msg}`;
+        if (isSuccess) toast.classList.add('success');
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show', 'success');
+        }, 3000);
+    }
+
+    function resetAndRepopulateGrid() {
+        const grid = document.getElementById('daysGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        topics.forEach((item, index) => {
+            const dayNum = index + 1;
+            const day = document.createElement('div');
+            day.className = 'day-circle locked';
+            day.setAttribute('data-tooltip', `${item.lang}: ${item.topic}`);
+            day.setAttribute('data-day-num', String(dayNum));
+            day.innerHTML = `${dayNum}<span>${item.lang}</span>`;
+            grid.appendChild(day);
+        });
+        updateStreakCounter();
+    }
+
     // Reset streak button handler
     const resetStreakBtn = document.getElementById('resetStreak');
     if (resetStreakBtn) {
         resetStreakBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to reset your streak progress?')) {
+            if (confirm('Are you sure you want to reset your streak progress? This will clear all progress and set streak to 0.')) {
                 localStorage.removeItem('streakDays');
-                location.reload();
+                resetAndRepopulateGrid();
+                showStreakToast('Streak reset successfully! Start fresh 🔥', true);
+            } else {
+                showStreakToast('Reset cancelled.', false);
             }
         });
     }
