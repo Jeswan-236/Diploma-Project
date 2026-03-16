@@ -393,7 +393,7 @@
 if (grid) {
         topics.forEach((item, index) => {
             const dayNum = index + 1;
-            const status = savedStreak[dayNum] || item.status;
+            const status = savedStreak[dayNum] || 'locked';
             const day = document.createElement('div');
             day.className = `day-circle ${status}`;
             day.setAttribute('data-tooltip', `${item.lang}: ${item.topic}`);
