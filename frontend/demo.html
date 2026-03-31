@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -14,6 +14,93 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="demo2.css?v=5">
+    <style>
+        /* Admin Panel Styles - ADDED ONLY THIS CSS */
+        .admin-panel-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 2rem;
+            display: none;
+        }
+
+        .admin-panel-container.visible {
+            display: block;
+        }
+
+        .admin-card {
+            background: rgba(10, 12, 25, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 2px solid rgba(239, 68, 68, 0.5);
+        }
+
+        .admin-card h2 {
+            color: #f87171;
+            margin-bottom: 15px;
+        }
+
+        .admin-card h2 i {
+            color: #ef4444;
+        }
+
+        .user-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-table th {
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            width: auto;
+            display: inline-block;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stats span {
+            color: #8b5cf6;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .admin-badge {
+            display: inline-block;
+            background: #ef4444;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+    </style>
 </head>
 
 <body>
@@ -98,6 +185,9 @@
                 <a href="#videos"><i class="fas fa-video"></i> videos</a>
                 <a href="#calendar"><i class="fas fa-calendar-alt"></i> 2026</a>
                 <a href="portal.html"><i class="fas fa-graduation-cap"></i> portal</a>
+                <button id="logoutBtn"
+                    style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 8px 16px; border-radius: 30px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.9rem; margin-left: 10px;"><i
+                        class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </nav>
     </header>
@@ -178,7 +268,8 @@
                 <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:12px;">
                     <div
                         style="width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;color:#cbd5ff;font-size:26px;">
-                        <i class="fas fa-fire"></i></div>
+                        <i class="fas fa-fire"></i>
+                    </div>
                     <div id="streakCounter" style="font-size:44px;font-weight:700;color:#fff;line-height:1;">0</div>
                     <div style="color:#9fb0ff;font-weight:600;margin-bottom:6px;">Day Streak</div>
                     <div style="color:#9fb0ff;font-size:13px;">Complete tasks to ignite the fire!</div>
@@ -374,12 +465,10 @@
             <div class="calendar-2026 fade-up delay-1">
                 <div class="calendar-header">
                     <div class="year-badge">
-                        <h3><i class="fas fa-calendar-star"></i> full year streak</h3>
+                        <h3><i class="fas fa-calendar-star"></i> Full year streak</h3>
                         <span style="font-size: 2rem;">🔥 365 days</span>
                     </div>
-                    <button id="aiSuggestBtn" class="ai-schedule-btn">
-                        <i class="fas fa-robot"></i> AI Suggest Schedule
-                    </button>
+
                 </div>
 
                 <div class="month-nav">
@@ -400,6 +489,48 @@
             </p>
         </section>
     </main>
+
+    <!-- ADMIN PANEL HTML - ADDED HERE -->
+    <div id="adminPanel" class="admin-panel-container">
+        <div class="admin-card">
+            <h2><i class="fas fa-user-shield"></i> Admin Panel - User Management</h2>
+            <p style="color: #9ca3af; margin-bottom: 15px;">All registered users and their passwords</p>
+
+            <div class="stats">
+                Total Registered Users: <span id="totalUsers">0</span>
+            </div>
+
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="addTestUser()"
+                    style="background: #10b981; flex: 1; padding: 10px; border: none; border-radius: 8px; color: white; cursor: pointer;">
+                    <i class="fas fa-plus"></i> Add Test User
+                </button>
+                <button onclick="clearAllUsers()"
+                    style="background: #ef4444; flex: 1; padding: 10px; border: none; border-radius: 8px; color: white; cursor: pointer;">
+                    <i class="fas fa-trash"></i> Clear All Users
+                </button>
+            </div>
+            <p style="color: #f87171; font-size: 0.7rem; margin-top: 15px; text-align: center;">
+                <i class="fas fa-shield-alt"></i> Admin: skillstalkeradmin / 727303949
+            </p>
+        </div>
+    </div>
 
     <!-- Feature Modal for Videos/Content -->
     <div class="feature-modal-overlay" id="featureModal">
@@ -460,7 +591,7 @@
     </div>
 
     <footer>
-        <p><i class="fas fa-skull"></i> skill stalker · day 1 → 30 · 2026 full year <i class="fas fa-skull"></i></p>
+        <p><i class="fas fa-skull"></i> skill stalker · day 1 → 30 · 2026 Full year <i class="fas fa-skull"></i></p>
         <p><i class="fas fa-calendar"></i> 12 months · 30 days a month · every footprint counts</p>
     </footer>
 
@@ -715,6 +846,215 @@
             }
 
         })();
+    </script>
+
+    <!-- LOGOUT BUTTON SCRIPT -->
+    <script>
+        // Logout functionality
+        function showToast(message, isError = false) {
+            let toast = document.getElementById('toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast';
+                toast.className = 'toast';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.style.background = isError ? 'rgba(239, 68, 68, 0.9)' : 'rgba(0, 0, 0, 0.9)';
+            toast.style.borderLeft = isError ? '4px solid #ef4444' : '4px solid #4ade80';
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('ss_active_user');
+            localStorage.removeItem('ss_remembered_login');
+            showToast('🔓 Logged out successfully! Redirecting to portal...');
+            setTimeout(() => {
+                window.location.href = 'portal.html';
+            }, 1500);
+        }
+
+        // Attach event listener to the logout button
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', logoutUser);
+            console.log('Logout button is working!');
+        } else {
+            console.log('Logout button not found');
+        }
+    </script>
+
+    <!-- ADMIN PANEL SCRIPT -->
+    <script>
+        // Admin credentials
+        const ADMIN_USERNAME = "skillstalkeradmin";
+        const ADMIN_PASSWORD = "727303949";
+
+        // Load users from localStorage
+        let users = [];
+        let currentLoggedInUser = null;
+
+        function loadUsers() {
+            const stored = localStorage.getItem('skillstalker_users_final');
+            if (stored) {
+                users = JSON.parse(stored);
+            } else {
+                users = [
+                    {
+                        fullname: "Demo Learner",
+                        username: "student",
+                        email: "student@skillstalker.com",
+                        password: "2026",
+                        createdAt: new Date().toISOString(),
+                        isAdmin: false
+                    },
+                    {
+                        fullname: "Skill Stalker Admin",
+                        username: ADMIN_USERNAME,
+                        email: "admin@skillstalker.com",
+                        password: ADMIN_PASSWORD,
+                        createdAt: new Date().toISOString(),
+                        isAdmin: true
+                    }
+                ];
+                saveUsers();
+            }
+            updateUserTable();
+            updateStats();
+        }
+
+        function saveUsers() {
+            localStorage.setItem('skillstalker_users_final', JSON.stringify(users));
+            updateUserTable();
+            updateStats();
+        }
+
+        function updateUserTable() {
+            const tbody = document.getElementById('userTableBody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                users.forEach((user) => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                         <td><strong>${user.username}</strong> ${user.isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}${user.username === ADMIN_USERNAME ? '<span class="admin-badge">MASTER</span>' : ''}</td>
+                         <td>${user.fullname}</td>
+                         <td>${user.email}</td>
+                         <td><span style="color: #8b5cf6; font-family: monospace;">${user.password}</span></td>
+                         <td><button class="delete-btn" onclick="deleteUser('${user.username}')">Delete</button></td>
+                    `;
+                });
+            }
+        }
+
+        function updateStats() {
+            const totalUsersSpan = document.getElementById('totalUsers');
+            if (totalUsersSpan) {
+                totalUsersSpan.innerText = users.length;
+            }
+        }
+
+        function isAdminLoggedIn() {
+            return currentLoggedInUser && currentLoggedInUser.isAdmin === true && currentLoggedInUser.username === ADMIN_USERNAME;
+        }
+
+        function updateAdminVisibility() {
+            const adminPanel = document.getElementById('adminPanel');
+            if (adminPanel) {
+                if (isAdminLoggedIn()) {
+                    adminPanel.classList.add('visible');
+                } else {
+                    adminPanel.classList.remove('visible');
+                }
+            }
+        }
+
+        function deleteUser(username) {
+            if (!isAdminLoggedIn()) {
+                alert('🔒 Admin access required!');
+                return;
+            }
+            if (username === ADMIN_USERNAME) {
+                alert('⚠️ Cannot delete the master admin account!');
+                return;
+            }
+            if (confirm(`Are you sure you want to delete user "${username}"?`)) {
+                users = users.filter(u => u.username !== username);
+                saveUsers();
+                alert(`✅ User "${username}" has been deleted.`);
+            }
+        }
+
+        function addTestUser() {
+            if (!isAdminLoggedIn()) {
+                alert('🔒 Admin access required!');
+                return;
+            }
+            let testNum = 1;
+            let testUsername = `testuser${testNum}`;
+            while (users.some(u => u.username === testUsername)) {
+                testNum++;
+                testUsername = `testuser${testNum}`;
+            }
+            const newUser = {
+                fullname: `Test User ${testNum}`,
+                username: testUsername,
+                email: `${testUsername}@test.com`,
+                password: `test${testNum}123`,
+                createdAt: new Date().toISOString(),
+                isAdmin: false
+            };
+            users.push(newUser);
+            saveUsers();
+            alert(`✅ Test user created!\nUsername: ${testUsername}\nPassword: test${testNum}123`);
+        }
+
+        function clearAllUsers() {
+            if (!isAdminLoggedIn()) {
+                alert('🔒 Admin access required!');
+                return;
+            }
+            if (confirm('⚠️ WARNING: This will delete ALL users except the master admin! Are you absolutely sure?')) {
+                users = [{
+                    fullname: "Skill Stalker Admin",
+                    username: ADMIN_USERNAME,
+                    email: "admin@skillstalker.com",
+                    password: ADMIN_PASSWORD,
+                    createdAt: new Date().toISOString(),
+                    isAdmin: true
+                }];
+                saveUsers();
+                alert('🗑️ All users cleared! Only master admin account remains.');
+            }
+        }
+
+        // Check login status on page load
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('ss_active_user');
+            if (savedUser) {
+                try {
+                    currentLoggedInUser = JSON.parse(savedUser);
+                    updateAdminVisibility();
+                } catch (e) { }
+            }
+        }
+
+        // Initialize
+        loadUsers();
+        checkLoginStatus();
+
+        // Auto-scroll to admin panel if admin is logged in
+        if (isAdminLoggedIn()) {
+            setTimeout(() => {
+                const adminPanel = document.getElementById('adminPanel');
+                if (adminPanel) {
+                    adminPanel.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 500);
+        }
+    </script>
     </script>
 </body>
 

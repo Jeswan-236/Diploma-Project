@@ -1,218 +1,994 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Portal · skill stalker 2026</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <title>Skill Stalker - Student Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="demo2.css">
     <style>
-        .portal-page {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0a0f1e 0%, #0b1222 100%);
+            color: #e6ecff;
             min-height: 100vh;
-            padding: 2rem;
+        }
+
+        .navbar {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(10, 15, 30, 0.6);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo i {
+            color: #8b5cf6;
+            margin-right: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
             align-items: center;
         }
-        .back-btn {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #ffbc6e;
+
+        .nav-links a {
+            color: #bdc9ff;
             text-decoration: none;
-            font-size: 1rem;
-            transition: transform 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 30px;
+            transition: all 0.3s;
         }
-        .back-btn:hover {
-            transform: translateX(-5px);
+
+        .nav-links a:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: white;
+        }
+
+        .admin-logo {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            padding: 8px 20px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            margin-left: 15px;
+        }
+
+        .admin-logo:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .admin-logo.hidden {
+            display: none;
+        }
+
+        /* Admin Logout Button - Beside Admin Panel */
+        .admin-logout-btn {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            padding: 8px 20px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            margin-left: 10px;
+            border: none;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .admin-logout-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.4);
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .admin-logout-btn.hidden {
+            display: none;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background: rgba(10, 12, 25, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        /* Admin Panel - COMPLETELY HIDDEN by default */
+        .admin-panel-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 2rem;
+            display: none;
+        }
+
+        .admin-panel-container.visible {
+            display: block;
+        }
+
+        .admin-card {
+            background: rgba(10, 12, 25, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 24px;
+            border: 2px solid rgba(239, 68, 68, 0.5);
+        }
+
+        .admin-card h2 {
+            color: #f87171;
+        }
+
+        .admin-card h2 i {
+            color: #ef4444;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: #bdc9ff;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #bdc9ff;
+        }
+
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(7, 16, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            padding-right: 45px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0;
+            width: auto;
+            transition: color 0.3s;
+        }
+
+        .toggle-password:hover {
+            color: #8b5cf6;
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            margin-top: 15px;
+        }
+
+        .demo-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            margin-top: 10px;
+        }
+
+        .user-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-table th {
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            width: auto;
+            display: inline-block;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 25px;
+            border-radius: 50px;
+            display: none;
+            z-index: 1000;
+            font-size: 0.9rem;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stats span {
+            color: #8b5cf6;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .admin-badge {
+            display: inline-block;
+            background: #ef4444;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 50px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .admin-logo,
+            .admin-logout-btn {
+                margin-left: 0;
+                margin-top: 5px;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .admin-panel-container {
+                padding: 0 1rem;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="bg-aura"></div>
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
-
-    <header>
-        <nav class="navbar fade-up">
-<div class="logo"><i class="fas fa-code-branch"></i> skill stalker</div>
-            <div class="nav-links">
-                <a href="demo.html"><i class="fas fa-home"></i> home</a>
-                <a href="#"><i class="fas fa-fire"></i> streak</a>
-                <a href="#"><i class="fas fa-video"></i> videos</a>
-                <a href="#"><i class="fas fa-calendar-alt"></i> 2026</a>
-                <a href="portal.html" class="active"><i class="fas fa-graduation-cap"></i> portal</a>
+    <nav class="navbar">
+        <div class="logo"><i class="fas fa-code-branch"></i> Skill Stalker Portal</div>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">Dashboard</a>
+            <a href="#">Courses</a>
+            <div id="adminLogo" class="admin-logo hidden" onclick="scrollToAdminPanel()">
+                <i class="fas fa-user-shield"></i>
+                <span>Admin Panel</span>
             </div>
-        </nav>
-    </header>
+            <!-- Admin Logout Button - Beside Admin Panel button -->
+            <button id="adminLogoutBtn" class="admin-logout-btn hidden" onclick="adminLogout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Admin Logout</span>
+            </button>
+        </div>
+    </nav>
 
-    <main class="portal-page">
-        <a href="demo.html" class="back-btn fade-up">
-            <i class="fas fa-arrow-left"></i> back to dashboard
-        </a>
+    <!-- Main User Portal -->
+    <div class="container" id="userPortal">
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('login')">🔐 Sign In</button>
+                <button class="tab" onclick="switchTab('register')">📝 Create Account</button>
+                <button class="tab" onclick="switchTab('changepwd')">🔄 Change Password</button>
+            </div>
 
-        <section class="portal-section">
-            <div class="login-wrap">
-                <div class="signin-card">
-                    <div class="brand">
-                        <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
-<h1>Skill Stalker Portal</h1>
-                        <p class="muted">Sign in to access your study dashboard</p>
-                    </div>
-
-                    <form id="signinForm" onsubmit="return false;">
-                        <div class="field">
-                            <label>Username</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-user"></i>
-                                <input id="username" type="text" placeholder="username" autocomplete="username">
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label>Password</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-lock"></i>
-                                <input id="password" type="password" placeholder="password" autocomplete="current-password">
-                                <button type="button" id="togglePwd" class="icon-btn" aria-label="Toggle password visibility"><i class="fas fa-eye"></i></button>
-                            </div>
-                        </div>
-
-                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                            <label style="display:flex;align-items:center;gap:8px;color:#a9c0ff;font-size:0.95rem;"><input id="rememberMe" type="checkbox"> Remember me</label>
-                            <a href="#" style="color:#9fb0ff;text-decoration:underline;font-size:0.9rem;">Forgot?</a>
-                        </div>
-
-                        <div style="display:flex;gap:0.6rem;align-items:center;">
-                            <button id="loginBtn" class="glow-btn" style="flex:1;">Sign In</button>
-                            <button id="demoFill" class="cancel-btn" style="width:120px;">Demo</button>
-                        </div>
-                    </form>
-
-                    <div class="alt-actions">
-                        <button id="googleLogin" class="social-google"><i class="fab fa-google"></i> Sign in with Google</button>
-                        <button id="phoneLogin" class="social-phone"><i class="fas fa-phone"></i> Sign in with Phone</button>
+            <!-- Login Form -->
+            <div id="loginForm" style="display: block;">
+                <h2 style="margin-bottom: 20px;">Welcome Back!</h2>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter your username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="loginPassword" placeholder="Enter your password">
+                        <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="signin-illustration">
-                    <div class="illus-card">
-                        <h3>Welcome back</h3>
-                        <p>Continue your learning streak — pick up exactly where you left off.</p>
-                        <div class="sparkles">
-                            <div class="spark" style="--i:0;"></div>
-                            <div class="spark" style="--i:1;"></div>
-                            <div class="spark" style="--i:2;"></div>
-                            <div class="spark" style="--i:3;"></div>
-                        </div>
+                <button onclick="login()">Sign In</button>
+                <button class="demo-btn" onclick="demoLogin()">🎯 Try Demo Account</button>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" style="display: none;">
+                <h2 style="margin-bottom: 20px;">Create Your Account</h2>
+                <p style="color: #8b5cf6; margin-bottom: 15px;">✨ Choose your own username and password! Each username
+                    must be unique.</p>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regName" placeholder="Your full name">
+                </div>
+                <div class="form-group">
+                    <label>Username (MUST BE UNIQUE)</label>
+                    <input type="text" id="regUsername" placeholder="Choose a unique username">
+                    <small style="color: #f87171; font-size: 0.7rem;" id="usernameError"></small>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password (your choice - minimum 4 characters)</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="regPassword" placeholder="Create any password you want">
+                        <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="regConfirm" placeholder="Confirm your password">
+                        <button type="button" class="toggle-password" onclick="togglePassword('regConfirm', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button onclick="register()">Create Account</button>
             </div>
-        </section>
-    </main>
+
+            <!-- Change Password Form -->
+            <div id="changepwdForm" style="display: none;">
+                <h2 style="margin-bottom: 20px;">Change Password</h2>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="cpUsername" placeholder="Your username">
+                </div>
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="cpCurrent" placeholder="Your current password">
+                        <button type="button" class="toggle-password" onclick="togglePassword('cpCurrent', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>New Password (your choice)</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="cpNew" placeholder="Choose a new password">
+                        <button type="button" class="toggle-password" onclick="togglePassword('cpNew', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="cpConfirm" placeholder="Confirm new password">
+                        <button type="button" class="toggle-password" onclick="togglePassword('cpConfirm', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button onclick="changePassword()">Update Password</button>
+            </div>
+
+            <!-- Logout Button -->
+            <button class="logout-btn" onclick="logout()" style="margin-top: 20px;">
+                <i class="fas fa-sign-out-alt"></i> Logout / Clear Session
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Panel - COMPLETELY HIDDEN from regular users -->
+    <div id="adminPortal" class="admin-panel-container">
+        <div class="admin-card">
+            <h2><i class="fas fa-user-shield"></i> Admin Panel - User Management</h2>
+            <p style="color: #9ca3af; margin-bottom: 15px;">All registered users and their passwords</p>
+
+            <div class="stats">
+                Total Registered Users: <span id="totalUsers">0</span>
+            </div>
+
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="addTestUser()" style="background: #10b981; flex: 1;">
+                    <i class="fas fa-plus"></i> Add Test User
+                </button>
+                <button onclick="clearAllUsers()" style="background: #ef4444; flex: 1;">
+                    <i class="fas fa-trash"></i> Clear All Users
+                </button>
+            </div>
+            <p style="color: #f87171; font-size: 0.7rem; margin-top: 15px; text-align: center;">
+                <i class="fas fa-shield-alt"></i> Admin: skillstalkeradmin / 727303949
+            </p>
+        </div>
+    </div>
 
     <footer>
-        <p style="text-align:center;color:#9fb0ff;padding:1rem 0;">© 2026 Still Stalker</p>
+        <p>© 2026 Skill Stalker · learn without limits · build your future</p>
     </footer>
 
-    <div class="toast-popup" id="toast"><i class="fas fa-exclamation-triangle"></i> <span id="toastMsg">incorrect password</span></div>
+    <div id="toast" class="toast"></div>
 
     <script>
-        (function(){
-            const loginBtn = document.getElementById('loginBtn');
-            const demoBtn = document.getElementById('demoFill');
-            const usr = document.getElementById('username');
-            const pwd = document.getElementById('password');
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMsg');
-            const card = document.querySelector('.signin-card');
-            const togglePwd = document.getElementById('togglePwd');
-            const remember = document.getElementById('rememberMe');
+        // Admin Credentials
+        const ADMIN_USERNAME = "skillstalkeradmin";
+        const ADMIN_PASSWORD = "727303949";
 
-            function showToast(msg){
-                toastMsg.innerText = msg;
-                toast.classList.add('show');
-                setTimeout(()=> toast.classList.remove('show'), 2600);
+        // Load users from localStorage
+        let users = [];
+        let currentLoggedInUser = null;
+
+        function loadUsers() {
+            const stored = localStorage.getItem('skillstalker_users_final');
+            if (stored) {
+                users = JSON.parse(stored);
+            } else {
+                // Default demo accounts
+                users = [
+                    {
+                        fullname: "Demo Learner",
+                        username: "student",
+                        email: "student@skillstalker.com",
+                        password: "2026",
+                        createdAt: new Date().toISOString(),
+                        isAdmin: false
+                    },
+                    {
+                        fullname: "Skill Stalker Admin",
+                        username: ADMIN_USERNAME,
+                        email: "admin@skillstalker.com",
+                        password: ADMIN_PASSWORD,
+                        createdAt: new Date().toISOString(),
+                        isAdmin: true
+                    }
+                ];
+                saveUsers();
             }
+            updateUserTable();
+            updateStats();
+        }
 
-            try{
-                const saved = localStorage.getItem('ss_remember');
-                if(saved){ const obj = JSON.parse(saved); if(obj.username) usr.value = obj.username; if(obj.remember) remember.checked = true; }
-            }catch(e){}
+        function saveUsers() {
+            localStorage.setItem('skillstalker_users_final', JSON.stringify(users));
+            updateUserTable();
+            updateStats();
+        }
 
-            demoBtn.addEventListener('click', ()=>{
-                usr.value = 'student'; pwd.value = '2026';
-                usr.focus();
-            });
-
-            if(togglePwd){
-                togglePwd.addEventListener('click', ()=>{
-                    const is = pwd.getAttribute('type') === 'password';
-                    pwd.setAttribute('type', is ? 'text' : 'password');
-                    togglePwd.innerHTML = is ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+        function updateUserTable() {
+            const tbody = document.getElementById('userTableBody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                users.forEach((user, index) => {
+                    const row = tbody.insertRow();
+                    const isAdminUser = user.username === ADMIN_USERNAME;
+                    row.innerHTML = `
+                        <td><strong>${user.username}</strong> ${user.isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}${isAdminUser ? '<span class="admin-badge">MASTER</span>' : ''}</td>
+                        <td>${user.fullname}</td>
+                        <td>${user.email}</td>
+                        <td><span style="color: #8b5cf6; font-family: monospace;">${user.password}</span></td>
+                        <td><button class="delete-btn" onclick="deleteUser('${user.username}')">Delete</button></td>
+                    `;
                 });
             }
+        }
 
-            loginBtn.addEventListener('click', ()=>{
-                const u = (usr.value||'').trim();
-                const p = (pwd.value||'').trim();
-                if(u === 'student' && p === '2026'){
-                    card.classList.add('success');
-                    showToast('Welcome — signing in...');
-                    try{ localStorage.setItem('ss_remember', JSON.stringify({ username: remember.checked?u:'', remember: remember.checked })); }catch(e){}
-                    setTimeout(()=> location.href = 'demo.html', 900);
-                } else {
-                    card.classList.remove('success');
-                    card.classList.add('shake');
-                    showToast('Incorrect username or password');
-                    setTimeout(()=> card.classList.remove('shake'), 600);
-                }
+        function updateStats() {
+            const totalUsersSpan = document.getElementById('totalUsers');
+            if (totalUsersSpan) {
+                totalUsersSpan.innerText = users.length;
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = isError ? 'rgba(239, 68, 68, 0.9)' : 'rgba(0, 0, 0, 0.9)';
+            toast.style.borderLeft = isError ? '4px solid #ef4444' : '4px solid #4ade80';
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function togglePassword(inputId, buttonElement) {
+            const input = document.getElementById(inputId);
+            const icon = buttonElement.querySelector('i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function isAdminLoggedIn() {
+            return currentLoggedInUser && currentLoggedInUser.isAdmin === true && currentLoggedInUser.username === ADMIN_USERNAME;
+        }
+
+        function showAdminPanel() {
+            const adminPortal = document.getElementById('adminPortal');
+            if (adminPortal) {
+                adminPortal.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function scrollToAdminPanel() {
+            if (isAdminLoggedIn()) {
+                showAdminPanel();
+                showToast('👑 Admin Panel - You have full access to manage users', false);
+            }
+        }
+
+        function updateAdminVisibility() {
+            const adminPortal = document.getElementById('adminPortal');
+            const adminLogo = document.getElementById('adminLogo');
+            const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+
+            if (isAdminLoggedIn()) {
+                adminPortal.classList.add('visible');
+                adminLogo.classList.remove('hidden');
+                adminLogoutBtn.classList.remove('hidden');
+            } else {
+                adminPortal.classList.remove('visible');
+                adminLogo.classList.add('hidden');
+                adminLogoutBtn.classList.add('hidden');
+            }
+        }
+
+        function switchTab(tab) {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('changepwdForm').style.display = 'none';
+
+            if (tab === 'login') {
+                document.getElementById('loginForm').style.display = 'block';
+            } else if (tab === 'register') {
+                document.getElementById('registerForm').style.display = 'block';
+                document.getElementById('usernameError').innerHTML = '';
+            } else if (tab === 'changepwd') {
+                document.getElementById('changepwdForm').style.display = 'block';
+            }
+
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.classList.remove('active');
             });
+            event.target.classList.add('active');
+        }
 
-            document.getElementById('googleLogin').addEventListener('click', ()=> showToast('Google sign-in not configured in demo'));
-            document.getElementById('phoneLogin').addEventListener('click', ()=> showToast('Phone sign-in not configured in demo'));
+        function checkUsernameAvailability() {
+            const username = document.getElementById('regUsername').value.trim();
+            const errorSpan = document.getElementById('usernameError');
 
-            setTimeout(()=> usr.focus(), 300);
-        })();
+            if (username && users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+                errorSpan.innerHTML = '❌ This username is already taken! Please choose another.';
+                errorSpan.style.color = '#f87171';
+                return false;
+            } else if (username) {
+                errorSpan.innerHTML = '✅ Username is available!';
+                errorSpan.style.color = '#4ade80';
+                return true;
+            }
+            return true;
+        }
+
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password) {
+                showToast('❌ Please enter username and password', true);
+                return;
+            }
+
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                currentLoggedInUser = user;
+                localStorage.setItem('ss_active_user', JSON.stringify(user));
+                showToast(`✅ Welcome back, ${user.fullname}!`);
+
+                if (user.isAdmin && user.username === ADMIN_USERNAME) {
+                    showToast('👑 Admin access granted! Admin Panel is now visible.', false);
+                    updateAdminVisibility();
+                } else {
+                    updateAdminVisibility();
+                    showToast(`Welcome ${user.fullname}!`, false);
+                }
+
+                setTimeout(() => {
+                    window.location.href = 'demo.html';
+                }, 1500);
+            } else {
+                const existingUser = users.find(u => u.username === username);
+                if (existingUser) {
+                    showToast(`❌ Incorrect password for "${username}". Please try again.`, true);
+                } else {
+                    showToast(`❌ Username "${username}" not found. Please create an account first.`, true);
+                }
+            }
+        }
+
+        function register() {
+            const fullname = document.getElementById('regName').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const confirm = document.getElementById('regConfirm').value.trim();
+
+            if (!fullname || !username || !email || !password || !confirm) {
+                showToast('⚠️ All fields are required!', true);
+                return;
+            }
+
+            if (password.length < 4) {
+                showToast('🔐 Password must be at least 4 characters', true);
+                return;
+            }
+
+            if (password !== confirm) {
+                showToast('❌ Passwords do not match', true);
+                return;
+            }
+
+            if (!email.includes('@')) {
+                showToast('📧 Please enter a valid email address', true);
+                return;
+            }
+
+            if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+                showToast(`❌ Username "${username}" is already taken! Please choose a different username.`, true);
+                document.getElementById('regUsername').focus();
+                return;
+            }
+
+            if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+                showToast(`❌ Email "${email}" is already registered!`, true);
+                return;
+            }
+
+            const newUser = {
+                fullname: fullname,
+                username: username,
+                email: email,
+                password: password,
+                createdAt: new Date().toISOString(),
+                isAdmin: false
+            };
+
+            users.push(newUser);
+            saveUsers();
+
+            showToast(`🎉 Account created successfully! Welcome ${fullname}!\n\nUsername: ${username}\nPassword: ${password}\n\nYou can now sign in.`);
+
+            document.getElementById('regName').value = '';
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regConfirm').value = '';
+            document.getElementById('usernameError').innerHTML = '';
+
+            document.getElementById('loginUsername').value = username;
+            document.getElementById('loginPassword').value = password;
+
+            switchTab('login');
+        }
+
+        function changePassword() {
+            const username = document.getElementById('cpUsername').value.trim();
+            const currentPwd = document.getElementById('cpCurrent').value.trim();
+            const newPwd = document.getElementById('cpNew').value.trim();
+            const confirmNew = document.getElementById('cpConfirm').value.trim();
+
+            if (!username || !currentPwd || !newPwd || !confirmNew) {
+                showToast('⚠️ Please fill in all fields', true);
+                return;
+            }
+
+            const userIndex = users.findIndex(u => u.username === username);
+
+            if (userIndex === -1) {
+                showToast(`❌ Username "${username}" not found`, true);
+                return;
+            }
+
+            if (users[userIndex].password !== currentPwd) {
+                showToast('❌ Current password is incorrect', true);
+                return;
+            }
+
+            if (newPwd.length < 4) {
+                showToast('🔐 New password must be at least 4 characters', true);
+                return;
+            }
+
+            if (newPwd !== confirmNew) {
+                showToast('❌ New passwords do not match', true);
+                return;
+            }
+
+            if (newPwd === currentPwd) {
+                showToast('⚠️ New password must be different from current password', true);
+                return;
+            }
+
+            users[userIndex].password = newPwd;
+            saveUsers();
+
+            showToast(`✅ Password changed successfully for "${username}"! Please sign in with your new password.`);
+
+            document.getElementById('cpUsername').value = '';
+            document.getElementById('cpCurrent').value = '';
+            document.getElementById('cpNew').value = '';
+            document.getElementById('cpConfirm').value = '';
+
+            document.getElementById('loginUsername').value = username;
+            document.getElementById('loginPassword').value = newPwd;
+
+            switchTab('login');
+        }
+
+        function deleteUser(username) {
+            if (!isAdminLoggedIn()) {
+                showToast('🔒 Admin access required to delete users', true);
+                return;
+            }
+
+            if (username === ADMIN_USERNAME) {
+                showToast('⚠️ Cannot delete the master admin account!', true);
+                return;
+            }
+
+            if (confirm(`Are you sure you want to delete user "${username}"?`)) {
+                users = users.filter(u => u.username !== username);
+                saveUsers();
+                showToast(`✅ User "${username}" has been deleted.`);
+            }
+        }
+
+        function addTestUser() {
+            if (!isAdminLoggedIn()) {
+                showToast('🔒 Admin access required to add test users', true);
+                return;
+            }
+
+            let testNum = 1;
+            let testUsername = `testuser${testNum}`;
+            while (users.some(u => u.username === testUsername)) {
+                testNum++;
+                testUsername = `testuser${testNum}`;
+            }
+
+            const newUser = {
+                fullname: `Test User ${testNum}`,
+                username: testUsername,
+                email: `${testUsername}@test.com`,
+                password: `test${testNum}123`,
+                createdAt: new Date().toISOString(),
+                isAdmin: false
+            };
+
+            users.push(newUser);
+            saveUsers();
+            showToast(`✅ Test user created!\nUsername: ${testUsername}\nPassword: test${testNum}123`);
+        }
+
+        function clearAllUsers() {
+            if (!isAdminLoggedIn()) {
+                showToast('🔒 Admin access required to clear users', true);
+                return;
+            }
+
+            if (confirm('⚠️ WARNING: This will delete ALL users except the master admin! Are you absolutely sure?')) {
+                users = [{
+                    fullname: "Skill Stalker Admin",
+                    username: ADMIN_USERNAME,
+                    email: "admin@skillstalker.com",
+                    password: ADMIN_PASSWORD,
+                    createdAt: new Date().toISOString(),
+                    isAdmin: true
+                }];
+                saveUsers();
+                showToast('🗑️ All users cleared! Only master admin account remains.');
+                logout();
+            }
+        }
+
+        function demoLogin() {
+            document.getElementById('loginUsername').value = 'student';
+            document.getElementById('loginPassword').value = '2026';
+            showToast('✅ Demo credentials loaded! Click Sign In.');
+        }
+
+        function logout() {
+            localStorage.removeItem('ss_active_user');
+            currentLoggedInUser = null;
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            updateAdminVisibility();
+            showToast('🔓 Logged out successfully! All sessions cleared.');
+            switchTab('login');
+        }
+
+        // Admin Logout Function - Only for admin
+        function adminLogout() {
+            if (isAdminLoggedIn()) {
+                showToast('👑 Admin logged out successfully!', false);
+                logout();
+            } else {
+                showToast('🔒 You are not logged in as admin', true);
+            }
+        }
+
+        // Check admin session on load
+        function checkSession() {
+            const savedUser = localStorage.getItem('ss_active_user');
+            if (savedUser) {
+                try {
+                    currentLoggedInUser = JSON.parse(savedUser);
+                    updateAdminVisibility();
+                } catch (e) {
+                    console.log('Error parsing user');
+                }
+            }
+        }
+
+        // Real-time username availability check
+        const regUsernameInput = document.getElementById('regUsername');
+        if (regUsernameInput) {
+            regUsernameInput.addEventListener('input', checkUsernameAvailability);
+        }
+
+        // Enter key support
+        document.getElementById('loginPassword')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+        document.getElementById('regConfirm')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') register();
+        });
+        document.getElementById('cpConfirm')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') changePassword();
+        });
+
+        // Initialize
+        loadUsers();
+        checkSession();
     </script>
-
-    <style>
-        .login-wrap { display:flex; gap:2.4rem; align-items:center; justify-content:center; width:100%; max-width:1280px; margin:0 auto; padding:0 1rem; }
-        .signin-card { background: linear-gradient(180deg, rgba(10,12,25,0.86), rgba(7,9,20,0.6)); padding:2.5rem; border-radius:16px; width:700px; max-width:820px; min-width:420px; box-shadow: 0 28px 60px rgba(0,0,0,0.65); border:1px solid rgba(255,255,255,0.04); position:relative; overflow:hidden; margin:0 auto; }
-        .signin-card.success { transform: scale(0.995) translateY(-6px); box-shadow: 0 36px 80px rgba(20,120,80,0.08); }
-        .signin-card .brand { text-align:center; margin-bottom:1.2rem; }
-        .signin-card .brand h1 { font-size:1.7rem; margin-top:0.4rem; letter-spacing:0.4px; }
-        .muted{ color:#9fb0ff; font-size:0.95rem; }
-        .field{ margin-bottom:12px; }
-        .input-with-icon{ display:flex; align-items:center; gap:12px; background:#071028; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); }
-        .input-with-icon i{ color:#7f9aff; width:22px; text-align:center; font-size:1.05rem; }
-        .input-with-icon input{ background:transparent; border:0; outline:none; color:#e6ecff; width:100%; font-size:1rem; padding:2px 0; }
-        .alt-actions{ display:flex; gap:0.8rem; margin-top:1.2rem; }
-        .social-google{ flex:1; background:linear-gradient(90deg,#fff,#f1f5f9); color:#0b0e1f; border-radius:12px; padding:12px; border:0; cursor:pointer; font-weight:600; }
-        .social-phone{ background:transparent; border:1px solid rgba(255,255,255,0.06); color:#e6ecff; border-radius:12px; padding:12px; cursor:pointer; }
-
-        .signin-illustration{ width:700px; display:flex; align-items:center; justify-content:center; margin:0 auto; }
-        .illus-card{ background:linear-gradient(180deg, rgba(99,102,241,0.06), rgba(6,182,212,0.03)); padding:2.5rem; border-radius:14px; text-align:center; color:#cfe2ff; }
-        .illus-card h3{ margin-bottom:0.6rem; }
-        .sparkles{ position:relative; height:60px; }
-        .spark{ position:absolute; width:8px; height:8px; background:linear-gradient(90deg,#ffd58c,#7cf596); border-radius:50%; top:20px; left:50%; transform-origin:center; animation: floatSpark 2s infinite; opacity:0.9; }
-        .spark:nth-child(2){ left:20%; animation-delay:0.2s; }
-        .spark:nth-child(3){ left:80%; animation-delay:0.4s; }
-        .spark:nth-child(4){ left:65%; animation-delay:0.6s; }
-        @keyframes floatSpark { 0%{ transform: translateY(0) scale(1);}50%{ transform: translateY(-14px) scale(1.25);}100%{ transform: translateY(0) scale(1);} }
-
-        .shake{ animation:shake 0.6s; }
-        @keyframes shake { 10%,90% { transform: translateX(-4px);} 20%,80% { transform: translateX(4px);} 30%,50%,70% { transform: translateX(-8px);} 40%,60% { transform: translateX(8px);} }
-
-        .back-btn{ position:absolute; left:40px; top:28px; color:#cfe2ff; text-decoration:none; background:linear-gradient(90deg,#6366f1,#8b5cf6); padding:10px 14px; border-radius:999px; box-shadow:0 10px 30px rgba(99,102,241,0.14); }
-
-        @media(max-width:1100px){ .login-wrap{ flex-direction:column-reverse; gap:1rem; padding:1rem; align-items:center; } .signin-illustration{ width:100%; } .signin-card{ width:100%; max-width:700px; } }
-    </style>
 </body>
+
 </html>
