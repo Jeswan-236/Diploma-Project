@@ -387,9 +387,9 @@
     <div class="container" id="userPortal">
         <div class="card">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('login')">🔐 Sign In</button>
-                <button class="tab" onclick="switchTab('register')">📝 Create Account</button>
-                <button class="tab" onclick="switchTab('changepwd')">🔄 Change Password</button>
+                <button class="tab active" onclick="switchTab('login', this)">🔐 Sign In</button>
+                <button class="tab" onclick="switchTab('register', this)">📝 Create Account</button>
+                <button class="tab" onclick="switchTab('changepwd', this)">🔄 Change Password</button>
             </div>
 
             <!-- Login Form -->
@@ -496,7 +496,7 @@
     <div id="adminPortal" class="admin-panel-container">
         <div class="admin-card">
             <h2><i class="fas fa-user-shield"></i> Admin Panel - User Management</h2>
-            <p style="color: #9ca3af; margin-bottom: 15px;">All registered users and their passwords</p>
+            <p style="color: #9ca3af; margin-bottom: 15px;">All registered users and their roles</p>
 
             <div class="stats">
                 Total Registered Users: <span id="totalUsers">0</span>
@@ -509,7 +509,7 @@
                             <th>Username</th>
                             <th>Full Name</th>
                             <th>Email</th>
-                            <th>Password</th>
+                            <th>Role</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -539,63 +539,71 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        // Admin Credentials
+        const API_BASE_URL = 'http://127.0.0.1:8000/api';
         const ADMIN_USERNAME = "skillstalkeradmin";
-        const ADMIN_PASSWORD = "727303949";
-
-        // Load users from localStorage
         let users = [];
         let currentLoggedInUser = null;
+        let authToken = localStorage.getItem('ss_token') || '';
 
-        function loadUsers() {
-            const stored = localStorage.getItem('skillstalker_users_final');
-            if (stored) {
-                users = JSON.parse(stored);
-            } else {
-                // Default demo accounts
-                users = [
-                    {
-                        fullname: "Demo Learner",
-                        username: "student",
-                        email: "student@skillstalker.com",
-                        password: "2026",
-                        createdAt: new Date().toISOString(),
-                        isAdmin: false
-                    },
-                    {
-                        fullname: "Skill Stalker Admin",
-                        username: ADMIN_USERNAME,
-                        email: "admin@skillstalker.com",
-                        password: ADMIN_PASSWORD,
-                        createdAt: new Date().toISOString(),
-                        isAdmin: true
-                    }
-                ];
-                saveUsers();
+        async function apiRequest(path, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            };
+
+            if (authToken) {
+                headers.Authorization = `Bearer ${authToken}`;
             }
-            updateUserTable();
-            updateStats();
+
+            const response = await fetch(`${API_BASE_URL}${path}`, {
+                ...options,
+                headers,
+            });
+
+            const contentType = response.headers.get('content-type') || '';
+            const data = contentType.includes('application/json')
+                ? await response.json()
+                : null;
+
+            if (!response.ok) {
+                const errorMessage = data?.message || data?.detail || 'Request failed';
+                throw new Error(errorMessage);
+            }
+
+            return data;
         }
 
-        function saveUsers() {
-            localStorage.setItem('skillstalker_users_final', JSON.stringify(users));
-            updateUserTable();
-            updateStats();
+        async function loadUsers() {
+            if (!isAdminLoggedIn()) {
+                users = [];
+                updateUserTable();
+                updateStats();
+                return;
+            }
+
+            try {
+                const data = await apiRequest('/users');
+                users = data.users || [];
+                updateUserTable();
+                updateStats();
+            } catch (error) {
+                showToast(`❌ ${error.message}`, true);
+            }
         }
 
         function updateUserTable() {
             const tbody = document.getElementById('userTableBody');
             if (tbody) {
                 tbody.innerHTML = '';
-                users.forEach((user, index) => {
+                users.forEach((user) => {
                     const row = tbody.insertRow();
                     const isAdminUser = user.username === ADMIN_USERNAME;
                     row.innerHTML = `
-                        <td><strong>${user.username}</strong> ${user.isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}${isAdminUser ? '<span class="admin-badge">MASTER</span>' : ''}</td>
+                        <td><strong>${user.username}</strong> ${user.is_admin ? '<span class="admin-badge">ADMIN</span>' : ''}${isAdminUser ? '<span class="admin-badge">MASTER</span>' : ''}</td>
                         <td>${user.fullname}</td>
                         <td>${user.email}</td>
-                        <td><span style="color: #8b5cf6; font-family: monospace;">${user.password}</span></td>
-                        <td><button class="delete-btn" onclick="deleteUser('${user.username}')">Delete</button></td>
+                        <td><span style="color: #8b5cf6; font-family: monospace;">${user.is_admin ? 'ADMIN' : 'STUDENT'}</span></td>
+                        <td><button class="delete-btn" onclick="deleteUser(${user.id})">Delete</button></td>
                     `;
                 });
             }
@@ -635,7 +643,7 @@
         }
 
         function isAdminLoggedIn() {
-            return currentLoggedInUser && currentLoggedInUser.isAdmin === true && currentLoggedInUser.username === ADMIN_USERNAME;
+            return currentLoggedInUser && currentLoggedInUser.is_admin === true && currentLoggedInUser.username === ADMIN_USERNAME;
         }
 
         function showAdminPanel() {
@@ -661,6 +669,7 @@
                 adminPortal.classList.add('visible');
                 adminLogo.classList.remove('hidden');
                 adminLogoutBtn.classList.remove('hidden');
+                loadUsers();
             } else {
                 adminPortal.classList.remove('visible');
                 adminLogo.classList.add('hidden');
@@ -668,7 +677,7 @@
             }
         }
 
-        function switchTab(tab) {
+        function switchTab(tab, buttonElement = null) {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('registerForm').style.display = 'none';
             document.getElementById('changepwdForm').style.display = 'none';
@@ -685,12 +694,21 @@
             document.querySelectorAll('.tab').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (buttonElement) {
+                buttonElement.classList.add('active');
+            }
         }
 
         function checkUsernameAvailability() {
             const username = document.getElementById('regUsername').value.trim();
             const errorSpan = document.getElementById('usernameError');
+            if (username) {
+                errorSpan.innerHTML = 'Username availability will be checked when you create the account.';
+                errorSpan.style.color = '#4ade80';
+            } else {
+                errorSpan.innerHTML = '';
+            }
+            return true;
 
             if (username && users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
                 errorSpan.innerHTML = '❌ This username is already taken! Please choose another.';
@@ -704,7 +722,7 @@
             return true;
         }
 
-        function login() {
+        async function login() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
 
@@ -713,35 +731,31 @@
                 return;
             }
 
-            const user = users.find(u => u.username === username && u.password === password);
+            try {
+                const tokenData = await apiRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
 
-            if (user) {
-                currentLoggedInUser = user;
-                localStorage.setItem('ss_active_user', JSON.stringify(user));
-                showToast(`✅ Welcome back, ${user.fullname}!`);
+                authToken = tokenData.access_token;
+                localStorage.setItem('ss_token', authToken);
 
-                if (user.isAdmin && user.username === ADMIN_USERNAME) {
-                    showToast('👑 Admin access granted! Admin Panel is now visible.', false);
-                    updateAdminVisibility();
-                } else {
-                    updateAdminVisibility();
-                    showToast(`Welcome ${user.fullname}!`, false);
-                }
+                const profile = await apiRequest('/auth/me');
+                currentLoggedInUser = profile;
+                localStorage.setItem('ss_active_user', JSON.stringify(profile));
+                updateAdminVisibility();
+
+                showToast(`✅ Welcome back, ${profile.fullname}!`);
 
                 setTimeout(() => {
                     window.location.href = 'demo.html';
-                }, 1500);
-            } else {
-                const existingUser = users.find(u => u.username === username);
-                if (existingUser) {
-                    showToast(`❌ Incorrect password for "${username}". Please try again.`, true);
-                } else {
-                    showToast(`❌ Username "${username}" not found. Please create an account first.`, true);
-                }
+                }, 1200);
+            } catch (error) {
+                showToast(`❌ ${error.message}`, true);
             }
         }
 
-        function register() {
+        async function register() {
             const fullname = document.getElementById('regName').value.trim();
             const username = document.getElementById('regUsername').value.trim();
             const email = document.getElementById('regEmail').value.trim();
@@ -753,8 +767,8 @@
                 return;
             }
 
-            if (password.length < 4) {
-                showToast('🔐 Password must be at least 4 characters', true);
+            if (password.length < 6) {
+                showToast('🔐 Password must be at least 6 characters', true);
                 return;
             }
 
@@ -768,45 +782,35 @@
                 return;
             }
 
-            if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-                showToast(`❌ Username "${username}" is already taken! Please choose a different username.`, true);
-                document.getElementById('regUsername').focus();
-                return;
+            try {
+                await apiRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ fullname, username, email, password })
+                });
+
+                showToast(`🎉 Account created successfully! Welcome ${fullname}!`);
+
+                document.getElementById('regName').value = '';
+                document.getElementById('regUsername').value = '';
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regConfirm').value = '';
+                document.getElementById('usernameError').innerHTML = '';
+
+                document.getElementById('loginUsername').value = username;
+                document.getElementById('loginPassword').value = '';
+
+                document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+                document.querySelector('.tab')?.classList.add('active');
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
+                document.getElementById('changepwdForm').style.display = 'none';
+            } catch (error) {
+                showToast(`❌ ${error.message}`, true);
             }
-
-            if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-                showToast(`❌ Email "${email}" is already registered!`, true);
-                return;
-            }
-
-            const newUser = {
-                fullname: fullname,
-                username: username,
-                email: email,
-                password: password,
-                createdAt: new Date().toISOString(),
-                isAdmin: false
-            };
-
-            users.push(newUser);
-            saveUsers();
-
-            showToast(`🎉 Account created successfully! Welcome ${fullname}!\n\nUsername: ${username}\nPassword: ${password}\n\nYou can now sign in.`);
-
-            document.getElementById('regName').value = '';
-            document.getElementById('regUsername').value = '';
-            document.getElementById('regEmail').value = '';
-            document.getElementById('regPassword').value = '';
-            document.getElementById('regConfirm').value = '';
-            document.getElementById('usernameError').innerHTML = '';
-
-            document.getElementById('loginUsername').value = username;
-            document.getElementById('loginPassword').value = password;
-
-            switchTab('login');
         }
 
-        function changePassword() {
+        async function changePassword() {
             const username = document.getElementById('cpUsername').value.trim();
             const currentPwd = document.getElementById('cpCurrent').value.trim();
             const newPwd = document.getElementById('cpNew').value.trim();
@@ -817,20 +821,8 @@
                 return;
             }
 
-            const userIndex = users.findIndex(u => u.username === username);
-
-            if (userIndex === -1) {
-                showToast(`❌ Username "${username}" not found`, true);
-                return;
-            }
-
-            if (users[userIndex].password !== currentPwd) {
-                showToast('❌ Current password is incorrect', true);
-                return;
-            }
-
-            if (newPwd.length < 4) {
-                showToast('🔐 New password must be at least 4 characters', true);
+            if (newPwd.length < 6) {
+                showToast('🔐 New password must be at least 6 characters', true);
                 return;
             }
 
@@ -844,85 +836,89 @@
                 return;
             }
 
-            users[userIndex].password = newPwd;
-            saveUsers();
+            try {
+                const result = await apiRequest('/auth/change-password', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        username,
+                        current_password: currentPwd,
+                        new_password: newPwd
+                    })
+                });
 
-            showToast(`✅ Password changed successfully for "${username}"! Please sign in with your new password.`);
+                showToast(`✅ ${result.message}`);
 
-            document.getElementById('cpUsername').value = '';
-            document.getElementById('cpCurrent').value = '';
-            document.getElementById('cpNew').value = '';
-            document.getElementById('cpConfirm').value = '';
+                document.getElementById('cpUsername').value = '';
+                document.getElementById('cpCurrent').value = '';
+                document.getElementById('cpNew').value = '';
+                document.getElementById('cpConfirm').value = '';
 
-            document.getElementById('loginUsername').value = username;
-            document.getElementById('loginPassword').value = newPwd;
+                document.getElementById('loginUsername').value = username;
+                document.getElementById('loginPassword').value = '';
 
-            switchTab('login');
+                document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+                document.querySelector('.tab')?.classList.add('active');
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
+                document.getElementById('changepwdForm').style.display = 'none';
+            } catch (error) {
+                showToast(`❌ ${error.message}`, true);
+            }
         }
 
-        function deleteUser(username) {
+        async function deleteUser(userId) {
             if (!isAdminLoggedIn()) {
                 showToast('🔒 Admin access required to delete users', true);
                 return;
             }
 
-            if (username === ADMIN_USERNAME) {
-                showToast('⚠️ Cannot delete the master admin account!', true);
-                return;
-            }
-
-            if (confirm(`Are you sure you want to delete user "${username}"?`)) {
-                users = users.filter(u => u.username !== username);
-                saveUsers();
-                showToast(`✅ User "${username}" has been deleted.`);
+            if (confirm('Are you sure you want to delete this user?')) {
+                try {
+                    const result = await apiRequest(`/users/${userId}`, {
+                        method: 'DELETE'
+                    });
+                    showToast(`✅ ${result.message}`);
+                    await loadUsers();
+                } catch (error) {
+                    showToast(`❌ ${error.message}`, true);
+                }
             }
         }
 
-        function addTestUser() {
+        async function addTestUser() {
             if (!isAdminLoggedIn()) {
                 showToast('🔒 Admin access required to add test users', true);
                 return;
             }
 
-            let testNum = 1;
-            let testUsername = `testuser${testNum}`;
-            while (users.some(u => u.username === testUsername)) {
-                testNum++;
-                testUsername = `testuser${testNum}`;
+            try {
+                const user = await apiRequest('/admin/test-user', {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+                showToast(`✅ Test user created: ${user.username}`);
+                await loadUsers();
+            } catch (error) {
+                showToast(`❌ ${error.message}`, true);
             }
-
-            const newUser = {
-                fullname: `Test User ${testNum}`,
-                username: testUsername,
-                email: `${testUsername}@test.com`,
-                password: `test${testNum}123`,
-                createdAt: new Date().toISOString(),
-                isAdmin: false
-            };
-
-            users.push(newUser);
-            saveUsers();
-            showToast(`✅ Test user created!\nUsername: ${testUsername}\nPassword: test${testNum}123`);
         }
 
-        function clearAllUsers() {
+        async function clearAllUsers() {
             if (!isAdminLoggedIn()) {
                 showToast('🔒 Admin access required to clear users', true);
                 return;
             }
 
             if (confirm('⚠️ WARNING: This will delete ALL users except the master admin! Are you absolutely sure?')) {
-                users = [{
-                    fullname: "Skill Stalker Admin",
-                    username: ADMIN_USERNAME,
-                    email: "admin@skillstalker.com",
-                    password: ADMIN_PASSWORD,
-                    createdAt: new Date().toISOString(),
-                    isAdmin: true
-                }];
-                saveUsers();
-                showToast('🗑️ All users cleared! Only master admin account remains.');
-                logout();
+                try {
+                    const result = await apiRequest('/admin/users/clear', {
+                        method: 'DELETE'
+                    });
+                    showToast(`✅ ${result.message}`);
+                    await loadUsers();
+                } catch (error) {
+                    showToast(`❌ ${error.message}`, true);
+                }
             }
         }
 
@@ -933,13 +929,20 @@
         }
 
         function logout() {
+            localStorage.removeItem('ss_token');
             localStorage.removeItem('ss_active_user');
+            authToken = '';
             currentLoggedInUser = null;
+            users = [];
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
             updateAdminVisibility();
             showToast('🔓 Logged out successfully! All sessions cleared.');
-            switchTab('login');
+            document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab')?.classList.add('active');
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('changepwdForm').style.display = 'none';
         }
 
         // Admin Logout Function - Only for admin
@@ -953,15 +956,20 @@
         }
 
         // Check admin session on load
-        function checkSession() {
-            const savedUser = localStorage.getItem('ss_active_user');
-            if (savedUser) {
-                try {
-                    currentLoggedInUser = JSON.parse(savedUser);
-                    updateAdminVisibility();
-                } catch (e) {
-                    console.log('Error parsing user');
-                }
+        async function checkSession() {
+            if (!authToken) {
+                return;
+            }
+
+            try {
+                currentLoggedInUser = await apiRequest('/auth/me');
+                localStorage.setItem('ss_active_user', JSON.stringify(currentLoggedInUser));
+                updateAdminVisibility();
+            } catch (e) {
+                localStorage.removeItem('ss_token');
+                localStorage.removeItem('ss_active_user');
+                authToken = '';
+                currentLoggedInUser = null;
             }
         }
 
@@ -983,7 +991,6 @@
         });
 
         // Initialize
-        loadUsers();
         checkSession();
     </script>
 </body>
