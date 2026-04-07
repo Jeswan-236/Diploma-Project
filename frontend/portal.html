@@ -17,9 +17,41 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #0a0f1e 0%, #0b1222 100%);
+            background: #020617;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(258,80%,54%,0.15) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.15) 0, transparent 50%);
             color: #e6ecff;
             min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            width: 50vw;
+            height: 50vh;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            animation: float 20s infinite alternate ease-in-out;
+            pointer-events: none;
+        }
+        body::before {
+            background: rgba(99, 102, 241, 0.15);
+            top: -10%; left: -10%;
+        }
+        body::after {
+            background: rgba(139, 92, 246, 0.15);
+            bottom: -10%; right: -10%;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(100px, 100px) scale(1.2); }
         }
 
         .navbar {
@@ -122,11 +154,37 @@
         }
 
         .card {
-            background: rgba(10, 12, 25, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 2.5rem;
             border-radius: 24px;
-            border: 1px solid rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+            transform: skewX(-20deg);
+            animation: shine 8s infinite;
+        }
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 200%; }
+            100% { left: 200%; }
         }
 
         /* Admin Panel - COMPLETELY HIDDEN by default */
@@ -159,36 +217,56 @@
 
         .tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 2rem;
+            gap: 8px;
+            margin-bottom: 2.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 6px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .tab {
             flex: 1;
             padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
+            background: transparent;
             border: none;
-            color: #bdc9ff;
+            color: #94a3b8;
             font-weight: 600;
             cursor: pointer;
             border-radius: 12px;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab:hover {
+            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.03);
         }
 
         .tab.active {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             position: relative;
         }
 
         label {
             display: block;
             margin-bottom: 8px;
-            color: #bdc9ff;
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
+        }
+
+        .form-group:focus-within label {
+            color: #8b5cf6;
         }
 
         .password-wrapper {
@@ -198,18 +276,28 @@
 
         input {
             width: 100%;
-            padding: 12px;
-            background: rgba(7, 16, 40, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
             color: white;
             font-size: 1rem;
             padding-right: 45px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(15, 23, 42, 0.8);
         }
 
         input:focus {
             outline: none;
             border-color: #8b5cf6;
+            background: rgba(15, 23, 42, 0.9);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
         }
 
         .toggle-password {
@@ -234,19 +322,42 @@
 
         button {
             width: 100%;
-            padding: 14px;
+            padding: 16px;
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             border: none;
-            border-radius: 30px;
+            border-radius: 12px;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: 0.5px;
             cursor: pointer;
             font-size: 1rem;
-            transition: transform 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.6);
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(255,255,255,0.2), transparent);
+            border-radius: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
         button:hover {
-            transform: scale(1.02);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -10px rgba(99, 102, 241, 0.8);
+        }
+
+        button:hover::after {
+            opacity: 1;
+        }
+        
+        button:active {
+            transform: translateY(1px);
         }
 
         .logout-btn {

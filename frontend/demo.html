@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>skill stalker · 2026 peak</title>
+
+    <title>Skill Stalker</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -622,58 +623,39 @@
                     style="background:transparent;border:0;color:#9fb0ff;cursor:pointer">✕</button>
             </div>
         </div>
-        <div id="aiSettingsHome"
-            style="display:none;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.02);background:rgba(255,255,255,0.01);">
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-                <label style="color:#9fb0ff;min-width:72px;">Mode</label>
-                <select id="aiModeHome"
-                    style="flex:1;padding:6px;border-radius:6px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:blueviolet;">
-                    <option value="offline">Offline (built-in)</option>
-                    <option value="remote">Remote LLM (API)</option>
-                    <option value="local">Local model (placeholder)</option>
-                </select>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-                <label style="color:#9fb0ff;min-width:72px;">Endpoint</label>
-                <input id="aiEndpointHome" placeholder="https://api.example.com/ai"
-                    style="flex:1;padding:6px;border-radius:6px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#e6ecff;">
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <label style="color:#9fb0ff;min-width:72px;">API Key</label>
-                <input id="aiKeyHome" placeholder="Optional - Bearer token"
-                    style="flex:1;padding:6px;border-radius:6px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#e6ecff;">
-            </div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
-                <button id="aiSaveSettingsHome"
-                    style="background:transparent;border:1px solid rgba(255,255,255,0.04);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Save</button>
-                <button id="aiResetSettingsHome"
-                    style="background:transparent;border:1px solid rgba(255,255,255,0.04);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Reset</button>
-            </div>
-            <div style="margin-top:8px;color:#9fb0ff;font-size:12px;">Note: Storing API keys in localStorage is
-                convenient for demos but not secure for production.</div>
-        </div>
-        <div id="aiMessagesHome"
-            style="padding:12px;max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);">
-        </div>
-        <div style="padding:10px;border-top:1px solid rgba(255,255,255,0.03);display:flex;gap:8px;align-items:center;">
-            <input id="aiInputHome" placeholder="Ask a question (e.g. 'how to center div?')"
-                style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6ecff;outline:none;">
-            <button id="aiSendHome" class="glow-btn" style="height:40px;padding:0 12px;">Send</button>
-        </div>
-        <div
-            style="padding:8px 12px;border-top:1px solid rgba(255,255,255,0.02);display:flex;gap:8px;flex-wrap:wrap;background:rgba(255,255,255,0.01);">
-            <button class="ai-suggest-home" data-q="center div horizontally"
-                style="background:transparent;border:1px solid rgba(255,255,255,0.03);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Center
-                div</button>
-            <button class="ai-suggest-home" data-q="flexbox vs grid"
-                style="background:transparent;border:1px solid rgba(255,255,255,0.03);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Flexbox
-                vs Grid</button>
-            <button class="ai-suggest-home" data-q="what is a matrix"
-                style="background:transparent;border:1px solid rgba(255,255,255,0.03);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Matrices</button>
-            <button class="ai-suggest-home" data-q="reverse string javascript"
-                style="background:transparent;border:1px solid rgba(255,255,255,0.03);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Reverse
-                string</button>
-        </div>
+
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+        <button id="aiSaveSettingsHome"
+            style="background:transparent;border:1px solid rgba(255,255,255,0.04);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Save</button>
+        <button id="aiResetSettingsHome"
+            style="background:transparent;border:1px solid rgba(255,255,255,0.04);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Reset</button>
+    </div>
+    <div style="margin-top:8px;color:#9fb0ff;font-size:12px;">Note: Storing API keys in localStorage is
+        convenient for demos but not secure for production.</div>
+    </div>
+    <div id="aiMessagesHome"
+        style="padding:12px;max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);">
+    </div>
+    <div style="padding:10px;border-top:1px solid rgba(255,255,255,0.03);display:flex;gap:8px;align-items:center;">
+        <input id="aiInputHome" placeholder="Ask a question (e.g. 'how to center div?')"
+            style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6ecff;outline:none;">
+        <button id="aiSendHome" class="glow-btn" style="height:40px;padding:0 12px;">Send</button>
+    </div>
+    <div
+        style="padding:8px 12px;border-top:1px solid rgba(255,255,255,0.02);display:flex;gap:8px;flex-wrap:wrap;background:rgba(255,255,255,0.01);">
+        <button class="ai-suggest-home" data-q="center div horizontally"
+            style="background:transparent;border:1px solid rgba(255,255,255,0.03);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Center
+            div</button>
+        <button class="ai-suggest-home" data-q="flexbox vs grid"
+            style="background:transparent;border:1px solid rgba(255,255,255,0.03);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Flexbox
+            vs Grid</button>
+        <button class="ai-suggest-home" data-q="what is a matrix"
+            style="background:transparent;border:1px solid rgba(255,255,255,0.03);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Matrices</button>
+        <button class="ai-suggest-home" data-q="reverse string javascript"
+            style="background:transparent;border:1px solid rgba(255,255,255,0.03);color:#9fb0ff;padding:6px 8px;border-radius:8px;cursor:pointer">Reverse
+            string</button>
+    </div>
     </div>
 
     <script>
