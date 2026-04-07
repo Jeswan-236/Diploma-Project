@@ -29,48 +29,9 @@
             <p style="color:#bdc9ff; margin-bottom:1rem;">Select a language to view curated video classes. Cards link to
                 YouTube search results for quick access.</p>
 
-            <div class="video-grid"
+            <div class="video-grid" id="videoGrid"
                 style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;">
-                <a class="video-card" href="https://www.youtube.com/results?search_query=html+crash+course"
-                    target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>HTML Video Class</h4>
-                    <p>Tags, structure, forms and semantic HTML.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-
-                <a class="video-card" href="https://www.youtube.com/results?search_query=css+fundamentals+flexbox+grid"
-                    target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>CSS Video Class</h4>
-                    <p>Selectors, box model, Flexbox & Grid.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-
-                <a class="video-card" href="https://www.youtube.com/results?search_query=javascript+basics+dom+events"
-                    target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>JavaScript Video Class</h4>
-                    <p>JS basics, DOM, events and async.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-
-                <a class="video-card"
-                    href="https://www.youtube.com/results?search_query=python+for+beginners+full+course" target="_blank"
-                    rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Python Video Class</h4>
-                    <p>Python fundamentals, data structures and examples.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-                <a class="video-card"
-                    href="https://www.youtube.com/results?search_query=python+for+beginners+full+course" target="_blank"
-                    rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>MySql</h4>
-                    <p>MySql fundamentals, Schema, CRUD.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
+                <!-- Videos will be loaded here -->
             </div>
         </section>
     </main>
@@ -78,7 +39,41 @@
     <footer style="padding:1rem;text-align:center;color:#9fb0ff;">
         <p><i class="fas fa-laptop-code"></i> Practice-by-doing: watch, code, repeat.</p>
     </footer>
-    <script src="chatbot.js"></script>
+    <script>
+        // Load videos from database
+        async function loadVideos() {
+            try {
+                const response = await fetch('/api/videos?category=coding');
+                const videos = await response.json();
+                
+                const grid = document.getElementById('videoGrid');
+                grid.innerHTML = '';
+                
+                videos.forEach(video => {
+                    const card = document.createElement('a');
+                    card.className = 'video-card';
+                    card.href = video.url;
+                    card.target = '_blank';
+                    card.rel = 'noopener';
+                    
+                    card.innerHTML = `
+                        <div class="video-thumb"><i class="fas fa-play"></i></div>
+                        <h4>${video.title}</h4>
+                        <p>${video.description}</p>
+                        <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
+                    `;
+                    
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error loading videos:', error);
+                document.getElementById('videoGrid').innerHTML = '<p style="color:#bdc9ff;">Error loading videos. Please try again later.</p>';
+            }
+        }
+        
+        // Load videos when page loads
+        document.addEventListener('DOMContentLoaded', loadVideos);
+    </script>
     <script src="chatbot.js"></script>
 </body>
 

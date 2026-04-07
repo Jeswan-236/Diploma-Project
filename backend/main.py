@@ -1,13 +1,19 @@
 import os
 from datetime import datetime, timedelta
-from fastapi import FastAPI, HTTPException, Depends, status
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from functools import wraps
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 from supabase import create_client, Client
 from passlib.context import CryptContext
-from jose import JWTError, jwt
-from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
+import jwt
+import json
+import urllib.request
+import urllib.parse
+import xml.etree.ElementTree as ET
+import re
+import html
+from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled, VideoUnavailable
 
 # Load env variables from .env in the same directory
 env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -17,47 +23,34 @@ load_dotenv(dotenv_path=env_path)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key")
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "AIzaSyAjPqJAl2QRbG7SHrAQh5IyCAmyXEAr9hQ")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 week
 
 # Initialize Supabase
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise ValueError("Supabase credentials not found. Please ensure .env is properly set up.")
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-app = FastAPI(title="SkillStalker API")
+# Initialize Flask
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "../frontend"), static_url_path="")
+app.config['JSON_SORT_KEYS'] = False
 
-# Enable CORS for the frontend portal
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Adjust in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+# Configure CORS
+frontend_origins = os.getenv(
+    "FRONTEND_ORIGINS",
+    "http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:8000,http://localhost:8000"
 )
+allow_origins = [origin.strip() for origin in frontend_origins.split(",") if origin.strip()]
+if not allow_origins:
+    allow_origins = ["http://127.0.0.1:5500", "http://localhost:5500"]
 
+CORS(app, resources={r"/api/*": {"origins": allow_origins}})
+
+# Password & JWT utilities
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-# --- Pydantic Models ---
-class RegisterRequest(BaseModel):
-    fullname: str
-    username: str
-    email: str
-    password: str
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-class UserProfile(BaseModel):
-    id: int
-    fullname: str
-    username: str
-    email: str
-    is_admin: bool
-
-# --- Password & JWT Utilities ---
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -71,91 +64,476 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# --- Dependency: Current User ---
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+# Dependency: Get current user from JWT token
+def get_current_user():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+    
+    token = auth_header.split(' ')[1]
+    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-        
+            return None
+    except jwt.InvalidTokenError:
+        return None
+    
     response = supabase.table("users").select("*").eq("username", username).execute()
     if not response.data:
-        raise credentials_exception
-        
+        return None
+    
     return response.data[0]
 
-# --- Endpoints ---
+# Decorator to require authentication
+def require_auth(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user = get_current_user()
+        if not user:
+            return jsonify({"detail": "Could not validate credentials"}), 401
+        return f(user, *args, **kwargs)
+    return decorated_function
 
-@app.post("/api/auth/register")
-async def register_user(user: RegisterRequest):
-    existing_user_resp = supabase.table("users").select("id").eq("username", user.username).execute()
-    if existing_user_resp.data:
-        raise HTTPException(status_code=400, detail="Username already registered")
-        
-    existing_email_resp = supabase.table("users").select("id").eq("email", user.email).execute()
-    if existing_email_resp.data:
-        raise HTTPException(status_code=400, detail="Email already registered")
+# Decorator to require admin role
+def require_admin(f):
+    @wraps(f)
+    def decorated_function(user, *args, **kwargs):
+        if not user.get("is_admin"):
+            return jsonify({"detail": "Not authorized. Admins only."}), 403
+        return f(user, *args, **kwargs)
+    return decorated_function
 
-    is_admin = (user.username == "skillstalkeradmin")
+# ====================== ENDPOINTS ======================
 
+@app.route('/')
+def read_root():
+    if request.accept_mimetypes.accept_html >= request.accept_mimetypes.accept_json:
+        return app.send_static_file('youtube_details.html')
+    return jsonify({"status": "online", "message": "SkillStalker API is running"})
+
+@app.route('/api/auth/register', methods=['POST'])
+def register_user():
+    data = request.get_json()
+    
+    if not data or not all(k in data for k in ('fullname', 'username', 'email', 'password')):
+        return jsonify({"detail": "Missing required fields"}), 400
+    
+    # Check if username already exists
+    existing_user = supabase.table("users").select("id").eq("username", data['username']).execute()
+    if existing_user.data:
+        return jsonify({"detail": "Username already registered"}), 400
+    
+    # Check if email already exists
+    existing_email = supabase.table("users").select("id").eq("email", data['email']).execute()
+    if existing_email.data:
+        return jsonify({"detail": "Email already registered"}), 400
+    
+    # Determine if admin
+    is_admin = (data['username'] == "skillstalkeradmin")
+    
+    # Create new user
     new_user = {
-        "fullname": user.fullname,
-        "username": user.username,
-        "email": user.email,
-        "password_hash": get_password_hash(user.password),
+        "fullname": data['fullname'],
+        "username": data['username'],
+        "email": data['email'],
+        "password_hash": get_password_hash(data['password']),
         "is_admin": is_admin
     }
     
     insert_resp = supabase.table("users").insert(new_user).execute()
     if not insert_resp.data:
-        raise HTTPException(status_code=500, detail="Failed to create user")
-        
-    return {"message": "User registered successfully"}
+        return jsonify({"detail": "Failed to create user"}), 500
+    
+    return jsonify({"message": "User registered successfully"}), 201
 
-
-@app.post("/api/auth/login")
-async def login_user(user: LoginRequest):
-    response = supabase.table("users").select("*").eq("username", user.username).execute()
+@app.route('/api/auth/login', methods=['POST'])
+def login_user():
+    data = request.get_json()
+    
+    if not data or not all(k in data for k in ('username', 'password')):
+        return jsonify({"detail": "Missing username or password"}), 400
+    
+    # Find user by username
+    response = supabase.table("users").select("*").eq("username", data['username']).execute()
     
     if not response.data:
-        raise HTTPException(status_code=401, detail="Invalid username or password")
-        
+        return jsonify({"detail": "Invalid username or password"}), 401
+    
     db_user = response.data[0]
-    if not verify_password(user.password, db_user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
-        
+    if not verify_password(data['password'], db_user["password_hash"]):
+        return jsonify({"detail": "Invalid username or password"}), 401
+    
+    # Generate token
     access_token = create_access_token(data={"sub": db_user["username"]})
-    return {"access_token": access_token, "token_type": "bearer"}
+    return jsonify({"access_token": access_token, "token_type": "bearer"}), 200
+
+@app.route('/api/auth/me', methods=['GET'])
+@require_auth
+def get_me(current_user):
+    return jsonify({
+        "id": current_user["id"],
+        "fullname": current_user["fullname"],
+        "username": current_user["username"],
+        "email": current_user["email"],
+        "is_admin": current_user.get("is_admin", False)
+    }), 200
+
+@app.route('/api/auth/change-password', methods=['POST'])
+@require_auth
+def change_password(current_user):
+    data = request.get_json()
+    
+    if not data or not all(k in data for k in ('username', 'current_password', 'new_password')):
+        return jsonify({"detail": "Missing required fields"}), 400
+    
+    # Check authorization
+    if current_user["username"] != data['username'] and not current_user.get("is_admin"):
+        return jsonify({"detail": "Not authorized to change this password"}), 403
+    
+    # Find target user
+    user_resp = supabase.table("users").select("*").eq("username", data['username']).execute()
+    if not user_resp.data:
+        return jsonify({"detail": "User not found"}), 404
+    
+    db_user = user_resp.data[0]
+    
+    # Verify current password
+    if not verify_password(data['current_password'], db_user["password_hash"]):
+        return jsonify({"detail": "Incorrect current password"}), 401
+    
+    # Update password
+    new_hash = get_password_hash(data['new_password'])
+    supabase.table("users").update({"password_hash": new_hash}).eq("username", data['username']).execute()
+    
+    return jsonify({"message": "Password changed successfully"}), 200
+
+@app.route('/api/user/progress', methods=['PUT'])
+@require_auth
+def save_user_progress(current_user):
+    data = request.get_json()
+    
+    if not data or 'profile_data' not in data:
+        return jsonify({"detail": "Missing profile_data"}), 400
+    
+    # Save progress
+    update_resp = supabase.table("users").update({
+        "profile_data": data['profile_data']
+    }).eq("username", current_user["username"]).execute()
+    
+    if not update_resp.data:
+        return jsonify({"detail": "Failed to save user progress"}), 500
+    
+    return jsonify({"message": "User progress saved successfully"}), 200
+
+@app.route('/api/user/progress', methods=['GET'])
+@require_auth
+def get_user_progress(current_user):
+    response = supabase.table("users").select("profile_data").eq("username", current_user["username"]).execute()
+    
+    if not response.data:
+        return jsonify({"profile_data": {}}), 200
+    
+    user_data = response.data[0]
+    profile_data = user_data.get("profile_data") or {}
+    
+    return jsonify({"profile_data": profile_data}), 200
+
+@app.route('/api/users', methods=['GET'])
+@require_auth
+@require_admin
+def get_all_users(current_user):
+    response = supabase.table("users").select("id, fullname, username, email, is_admin").order("id").execute()
+    return jsonify({"users": response.data}), 200
+
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+@require_auth
+@require_admin
+def delete_user(current_user, user_id):
+    # Prevent deleting self
+    if current_user["id"] == user_id:
+        return jsonify({"detail": "Cannot delete your own admin account"}), 400
+    
+    supabase.table("users").delete().eq("id", user_id).execute()
+    return jsonify({"message": "User deleted successfully"}), 200
+
+@app.route('/api/admin/test-user', methods=['POST'])
+@require_auth
+@require_admin
+def create_test_user(current_user):
+    import random
+    test_id = random.randint(1000, 9999)
+    test_username = f"student_test_{test_id}"
+    
+    new_user = {
+        "fullname": f"Test Student {test_id}",
+        "username": test_username,
+        "email": f"test_{test_id}@skillstalker.com",
+        "password_hash": get_password_hash("2026"),
+        "is_admin": False
+    }
+    
+    supabase.table("users").insert(new_user).execute()
+    return jsonify({"message": "Test user generated", "username": test_username}), 201
+
+@app.route('/api/admin/users/clear', methods=['DELETE'])
+@require_auth
+@require_admin
+def clear_all_users(current_user):
+    # Delete everyone EXCEPT skillstalkeradmin
+    supabase.table("users").delete().neq("username", "skillstalkeradmin").execute()
+    return jsonify({"message": "All non-admin users deleted successfully"}), 200
+
+# YouTube helper utilities
+
+def parse_iso8601_duration(duration):
+    pattern = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?")
+    match = pattern.match(duration or "")
+    if not match:
+        return duration or "0:00"
+
+    hours = int(match.group(1) or 0)
+    minutes = int(match.group(2) or 0)
+    seconds = int(match.group(3) or 0)
+    if hours:
+        return f"{hours}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes}:{seconds:02d}"
 
 
-@app.get("/api/auth/me", response_model=UserProfile)
-async def get_me(current_user: dict = Depends(get_current_user)):
-    return UserProfile(
-        id=current_user["id"],
-        fullname=current_user["fullname"],
-        username=current_user["username"],
-        email=current_user["email"],
-        is_admin=current_user.get("is_admin", False)
+def _urlopen_with_browser_headers(url):
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=10) as response:
+        return response.read().decode("utf-8")
+
+
+def _parse_yt_initial_player_response(html_text):
+    match = re.search(r"ytInitialPlayerResponse\s*=\s*(\{.+?\})\s*;", html_text, re.DOTALL)
+    if not match:
+        return None
+
+    try:
+        return json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return None
+
+
+def _fetch_caption_tracks_from_watch_page(video_id):
+    page_url = f"https://www.youtube.com/watch?v={urllib.parse.quote(video_id)}"
+    try:
+        html_text = _urlopen_with_browser_headers(page_url)
+    except Exception:
+        return []
+
+    player_response = _parse_yt_initial_player_response(html_text)
+    if not player_response:
+        return []
+
+    return (
+        player_response
+        .get("captions", {})
+        .get("playerCaptionsTracklistRenderer", {})
+        .get("captionTracks", [])
     )
 
 
-@app.get("/api/users")
-async def get_all_users(current_user: dict = Depends(get_current_user)):
-    if not current_user.get("is_admin"):
-        raise HTTPException(status_code=403, detail="Not authorized. Admins only.")
-        
-    response = supabase.table("users").select("id, fullname, username, email, is_admin").execute()
-    return {"users": response.data}
+def _choose_best_caption_track(tracks, lang="en"):
+    if not tracks:
+        return None
+
+    exact = [t for t in tracks if t.get("languageCode") == lang and t.get("kind") != "asr"]
+    if exact:
+        return exact[0]
+
+    fallback = [t for t in tracks if t.get("languageCode") == lang]
+    if fallback:
+        return fallback[0]
+
+    return tracks[0]
 
 
-@app.get("/")
-def read_root():
-    return {"status": "online", "message": "SkillStalker API is running"}
+def fetch_transcript(video_id, lang="en"):
+    api = YouTubeTranscriptApi()
+    try:
+        transcript_items = api.fetch(video_id, languages=[lang])
+    except (NoTranscriptFound, TranscriptsDisabled, VideoUnavailable):
+        transcript_items = None
+
+    if transcript_items:
+        items = []
+        full_text = []
+        for item in transcript_items:
+            items.append({
+                "start": float(getattr(item, "start", 0)),
+                "duration": float(getattr(item, "duration", 0)),
+                "text": getattr(item, "text", ""),
+            })
+            full_text.append(getattr(item, "text", ""))
+        return {"available": True, "items": items, "text": "\n".join(full_text)}
+
+    try:
+        transcript_list = api.list(video_id)
+        transcript = None
+        try:
+            transcript = transcript_list.find_transcript([lang])
+        except Exception:
+            pass
+
+        if not transcript:
+            try:
+                transcript = transcript_list.find_generated_transcript([lang])
+            except Exception:
+                pass
+
+        if not transcript:
+            try:
+                transcript = transcript_list.find_manually_created_transcript([lang])
+            except Exception:
+                pass
+
+        if not transcript:
+            transcript = next(iter(transcript_list), None)
+
+        if transcript:
+            transcript_items = transcript.fetch()
+            items = []
+            full_text = []
+            for item in transcript_items:
+                items.append({
+                    "start": float(getattr(item, "start", 0)),
+                    "duration": float(getattr(item, "duration", 0)),
+                    "text": getattr(item, "text", ""),
+                })
+                full_text.append(getattr(item, "text", ""))
+            return {"available": True, "items": items, "text": "\n".join(full_text)}
+    except Exception:
+        pass
+
+    transcript_url = f"https://video.google.com/timedtext?lang={urllib.parse.quote(lang)}&v={urllib.parse.quote(video_id)}"
+    try:
+        with urllib.request.urlopen(transcript_url, timeout=10) as response:
+            xml_text = response.read().decode("utf-8")
+    except Exception:
+        xml_text = ""
+
+    if not xml_text or "<transcript" not in xml_text:
+        tracks = _fetch_caption_tracks_from_watch_page(video_id)
+        track = _choose_best_caption_track(tracks, lang=lang)
+        if track and track.get("baseUrl"):
+            try:
+                xml_text = _urlopen_with_browser_headers(track["baseUrl"])
+            except Exception:
+                xml_text = ""
+
+    if not xml_text or "<transcript" not in xml_text:
+        return None
+
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return None
+
+    items = []
+    full_text = []
+    for element in root.findall("text"):
+        content = html.unescape(element.text or "")
+        start = float(element.attrib.get("start", "0"))
+        duration = float(element.attrib.get("dur", "0"))
+        items.append({"start": start, "duration": duration, "text": content})
+        full_text.append(content)
+
+    return {"available": True, "items": items, "text": "\n".join(full_text)}
+
+
+def fetch_youtube_video_details(video_id):
+    api_url = (
+        "https://www.googleapis.com/youtube/v3/videos?"
+        + urllib.parse.urlencode({
+            "part": "snippet,contentDetails,statistics",
+            "id": video_id,
+            "key": YOUTUBE_API_KEY,
+        })
+    )
+
+    try:
+        with urllib.request.urlopen(api_url, timeout=10) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except Exception:
+        return None
+
+    items = payload.get("items", [])
+    if not items:
+        return None
+
+    video = items[0]
+    snippet = video.get("snippet", {})
+    stats = video.get("statistics", {})
+    content_details = video.get("contentDetails", {})
+
+    return {
+        "video_id": video_id,
+        "title": snippet.get("title", ""),
+        "description": snippet.get("description", ""),
+        "channel_title": snippet.get("channelTitle", ""),
+        "published_at": snippet.get("publishedAt", ""),
+        "view_count": stats.get("viewCount", "0"),
+        "like_count": stats.get("likeCount", "0"),
+        "comment_count": stats.get("commentCount", "0"),
+        "duration": parse_iso8601_duration(content_details.get("duration", "")),
+        "thumbnail": snippet.get("thumbnails", {}).get("high", {}).get("url", ""),
+        "watch_url": f"https://www.youtube.com/watch?v={video_id}",
+        "embed_url": f"https://www.youtube.com/embed/{video_id}",
+    }
+
+
+@app.route('/api/youtube/video', methods=['GET'])
+def get_youtube_video_details():
+    video_id = request.args.get("video_id", "HcOc7P5BMi4").strip()
+    if not video_id:
+        return jsonify({"detail": "video_id query parameter is required"}), 400
+
+    details = fetch_youtube_video_details(video_id)
+    if not details:
+        return jsonify({"detail": "Video details not found or API request failed"}), 404
+
+    transcript = fetch_transcript(video_id)
+    if transcript is None:
+        transcript = {"available": False, "items": [], "text": "Transcript not available for this video."}
+
+    details["transcript"] = transcript
+    return jsonify(details), 200
+
+@app.route('/api/videos', methods=['GET'])
+def get_videos():
+    category = request.args.get('category')
+    
+    query = supabase.table("videos").select("*")
+    if category:
+        query = query.eq("category", category)
+    
+    response = query.execute()
+    videos = response.data
+    
+    return jsonify(videos), 200
+
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"detail": "Endpoint not found"}), 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({"detail": "Method not allowed"}), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"detail": "Internal server error"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, host='127.0.0.1', port=8000)

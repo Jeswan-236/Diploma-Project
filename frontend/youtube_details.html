@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Details</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(180deg, #090b17 0%, #121833 100%);
+            color: #e6ecff;
+            min-height: 100vh;
+        }
+
+        .page-shell {
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .header .label {
+            color: #8b95d7;
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: rgba(12, 17, 39, 0.92);
+            border: 1px solid rgba(120, 141, 255, 0.12);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-row input {
+            width: 100%;
+            padding: 0.95rem 1rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: #f8fbff;
+            font-size: 0.95rem;
+        }
+
+        .input-row button {
+            border: none;
+            border-radius: 14px;
+            padding: 0.95rem 1.3rem;
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .status {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            color: #a9b3ff;
+        }
+
+        .meta-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            margin-top: 1rem;
+        }
+
+        .meta-item {
+            background: rgba(18, 25, 55, 0.95);
+            border-radius: 16px;
+            padding: 1rem;
+            border: 1px solid rgba(100, 116, 255, 0.12);
+        }
+
+        .meta-item span {
+            display: block;
+            font-size: 0.8rem;
+            color: #8b95d7;
+            margin-bottom: 0.35rem;
+        }
+
+        .meta-item strong {
+            font-size: 1.05rem;
+            color: #f8fbff;
+        }
+
+        .video-frame {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            color: #dbe1ff;
+        }
+
+        pre,
+        .description {
+            white-space: pre-wrap;
+            line-height: 1.65;
+            color: #dfe3ff;
+            margin: 0;
+        }
+
+        .description {
+            background: rgba(17, 24, 56, 0.98);
+            border: 1px solid rgba(139, 149, 214, 0.08);
+            border-radius: 18px;
+            padding: 1rem;
+        }
+
+        .transcript-card {
+            margin-top: 1rem;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+
+        .button-row a {
+            color: #eef3ff;
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 0.7rem 1rem;
+            background: rgba(59, 130, 246, 0.16);
+            border: 1px solid rgba(59, 130, 246, 0.18);
+            font-size: 0.92rem;
+        }
+
+        .footer-note {
+            margin-top: 1.5rem;
+            font-size: 0.88rem;
+            color: #9aa4d8;
+        }
+
+        @media (max-width: 640px) {
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-shell">
+        <div class="header">
+            <div>
+                <h1>YouTube Video Details</h1>
+                <p class="label">Fetch video metadata and transcript using the backend API key.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="input-row">
+                <input id="videoIdInput" type="text" placeholder="Enter YouTube video ID (e.g. HcOc7P5BMi4)" value="HcOc7P5BMi4">
+                <button id="loadButton">Load Video</button>
+            </div>
+            <div class="status" id="status">Ready to load a video.</div>
+
+            <div id="detailSection" style="display:none;">
+                <div class="video-frame">
+                    <iframe id="videoFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+
+                <div class="button-row">
+                    <a id="watchLink" href="#" target="_blank" rel="noopener">Open on YouTube</a>
+                </div>
+
+                <div class="meta-grid">
+                    <div class="meta-item"><span>Title</span><strong id="videoTitle"></strong></div>
+                    <div class="meta-item"><span>Channel</span><strong id="channelTitle"></strong></div>
+                    <div class="meta-item"><span>Published</span><strong id="publishedAt"></strong></div>
+                    <div class="meta-item"><span>Duration</span><strong id="duration"></strong></div>
+                    <div class="meta-item"><span>Views</span><strong id="viewCount"></strong></div>
+                    <div class="meta-item"><span>Likes</span><strong id="likeCount"></strong></div>
+                    <div class="meta-item"><span>Comments</span><strong id="commentCount"></strong></div>
+                </div>
+
+                <div class="section-title">
+                    <h2>Description</h2>
+                </div>
+                <div class="description" id="description"></div>
+
+                <div class="section-title transcript-card">
+                    <h2>Transcript</h2>
+                </div>
+                <div class="description" id="transcript"></div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            <p>Use the default sample video ID or replace it with another YouTube video ID. The backend fetches video details using the configured API key.</p>
+        </div>
+    </div>
+
+    <script>
+        const videoIdInput = document.getElementById('videoIdInput');
+        const loadButton = document.getElementById('loadButton');
+        const statusEl = document.getElementById('status');
+        const detailSection = document.getElementById('detailSection');
+        const videoFrame = document.getElementById('videoFrame');
+        const watchLink = document.getElementById('watchLink');
+        const videoTitle = document.getElementById('videoTitle');
+        const channelTitle = document.getElementById('channelTitle');
+        const publishedAt = document.getElementById('publishedAt');
+        const duration = document.getElementById('duration');
+        const viewCount = document.getElementById('viewCount');
+        const likeCount = document.getElementById('likeCount');
+        const commentCount = document.getElementById('commentCount');
+        const description = document.getElementById('description');
+        const transcript = document.getElementById('transcript');
+
+        async function loadVideo(videoId) {
+            statusEl.textContent = 'Loading video details...';
+            detailSection.style.display = 'none';
+            try {
+                const response = await fetch(`/api/youtube/video?video_id=${encodeURIComponent(videoId)}`);
+                if (!response.ok) {
+                    const error = await response.json();
+                    statusEl.textContent = `Error: ${error.detail || response.statusText}`;
+                    return;
+                }
+
+                const data = await response.json();
+                videoFrame.src = data.embed_url;
+                watchLink.href = data.watch_url;
+                videoTitle.textContent = data.title || 'Unknown title';
+                channelTitle.textContent = data.channel_title || 'Unknown channel';
+                publishedAt.textContent = data.published_at ? new Date(data.published_at).toLocaleDateString() : 'Unknown';
+                duration.textContent = data.duration || 'Unknown';
+                viewCount.textContent = Number(data.view_count).toLocaleString();
+                likeCount.textContent = Number(data.like_count).toLocaleString();
+                commentCount.textContent = data.comment_count ? Number(data.comment_count).toLocaleString() : 'N/A';
+                description.textContent = data.description || 'No description available.';
+                transcript.textContent = data.transcript?.available ? data.transcript.text : 'Transcript not available.';
+                detailSection.style.display = 'block';
+                statusEl.textContent = 'Video loaded successfully.';
+            } catch (err) {
+                statusEl.textContent = `Failed to fetch video details: ${err.message}`;
+            }
+        }
+
+        loadButton.addEventListener('click', () => {
+            const videoId = videoIdInput.value.trim();
+            if (!videoId) {
+                statusEl.textContent = 'Please enter a valid YouTube video ID.';
+                return;
+            }
+            loadVideo(videoId);
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadVideo(videoIdInput.value.trim());
+        });
+    </script>
+</body>
+
+</html>

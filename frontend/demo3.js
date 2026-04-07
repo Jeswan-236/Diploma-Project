@@ -226,12 +226,18 @@
         }
         localStorage.setItem('aiStudySchedule', JSON.stringify(generatedSchedule));
         alert('Schedule saved successfully!');
+        if (typeof syncDataWithServer === 'function') {
+            syncDataWithServer().catch(() => {});
+        }
     }
 
     function clearSchedule() {
         generatedSchedule = [];
         if (scheduleDisplay) scheduleDisplay.style.display = 'none';
         localStorage.removeItem('aiStudySchedule');
+        if (typeof syncDataWithServer === 'function') {
+            syncDataWithServer().catch(() => {});
+        }
     }
 
     function loadSavedSchedule() {
@@ -413,6 +419,9 @@ window.completeNextStreakDay = function() {
                     stored[i] = 'completed';
                     localStorage.setItem('streakDays', JSON.stringify(stored));
                     updateStreakCounter();
+                    if (typeof syncDataWithServer === 'function') {
+                        syncDataWithServer().catch(() => {});
+                    }
                     return i;
                 }
             }
@@ -529,6 +538,9 @@ window.completeNextStreakDay = function() {
     // Save topics to localStorage
     function saveCalendarTopics() {
         localStorage.setItem('calendarTopics', JSON.stringify(calendarTopics));
+        if (typeof syncDataWithServer === 'function') {
+            syncDataWithServer().catch(() => {});
+        }
     }
 
     // Get topic for a specific day

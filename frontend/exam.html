@@ -35,71 +35,13 @@
             </div>
 
             <h3 style="color:#e6ecff; margin-top:0.8rem;">Maths</h3>
-            <div class="video-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem; margin-bottom:1.2rem;">
-                <a class="video-card" data-keywords="algebra,quadratic,linear,polynomials,matrix,matrices" href="https://youtu.be/gOK4p5bBmcQ?si=QdwDgueNrYEDizXo" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Algebra Basics</h4>
-                    <p>Foundational algebra lessons.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-                <a class="video-card" data-keywords="geometry,triangles,circles,theorems" href="https://youtu.be/DsAuX8ExDZc?si=uQvP28n6ixK_-viA" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Geometry Concepts</h4>
-                    <p>Shapes, theorems, and practice.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-                <a class="video-card" data-keywords="calculus,limits,derivatives,integrals" href="https://youtu.be/UukVP7Mg3TU?si=JAYkUwnw5I2H633a" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Calculus Intro</h4>
-                    <p>Limits, derivatives, integrals.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-                <a class="video-card" data-keywords="differentiation,derivative,derivatives,rate of change" href="https://youtu.be/6jk7ZBdEkmI?si=l7zJoXpqbqQMe_O-" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Differentiation Basics</h4>
-                    <p>Rules of differentiation and practical examples.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-                <a class="video-card" data-keywords="integration,integrals,antiderivative,area under curve" href="integrarion- https://youtu.be/9MqmP2QH4WA?si=uAihAPUJ45LSlaVT" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Integration & Applications</h4>
-                    <p>Indefinite and definite integrals, and applications.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-                <a class="video-card" data-keywords="matrix,matrices,determinant,row operations,linear algebra" href="https://www.youtube.com/live/6IcdcnhPGH0?si=8UzDetxNID56KWdL" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Matrices & Determinants</h4>
-                    <p>Matrix operations, determinants, and solving systems.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-                <a class="video-card" data-keywords="linear algebra,vectors,spaces,eigenvalues" href="https://youtu.be/fNk_zzaMoSs?si=N35Cd8PDTASzJAH5" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Linear Algebra Basics</h4>
-                    <p>Vectors, vector spaces and core linear algebra concepts.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
+            <div class="video-grid" id="mathsGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem; margin-bottom:1.2rem;">
+                <!-- Maths videos will be loaded here -->
             </div>
 
             <h3 style="color:#e6ecff; margin-top:0.8rem;">Science</h3>
-            <div class="video-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;">
-                <a class="video-card" data-keywords="physics,mechanics,motion,forces" href="https://youtu.be/aD58U3Ib0ng?si=XtySZccuRbGM6iCt" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Physics Basics</h4>
-                    <p>Mechanics and core principles.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-                <a class="video-card" data-keywords="chemistry,atoms,reactions,periodic" href="https://youtu.be/5iTOphGnCtg?si=gbTxv4Fa3RirGvZK" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Chemistry Fundamentals</h4>
-                    <p>Atoms, reactions, and practice.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
-                <a class="video-card" data-keywords="biology,cells,systems,ecology" href="https://youtu.be/URUJD5NEXC8?si=Eli07qvPUYJMMtj2" target="_blank" rel="noopener">
-                    <div class="video-thumb"><i class="fas fa-play"></i></div>
-                    <h4>Biology Overview</h4>
-                    <p>Cells, systems, and basics.</p>
-                    <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
-                </a>
+            <div class="video-grid" id="scienceGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;">
+                <!-- Science videos will be loaded here -->
             </div>
         </section>
     </main>
@@ -109,12 +51,53 @@
     </footer>
 
     <script>
+        let allVideos = [];
+
+        // Load videos from database
+        async function loadVideos() {
+            try {
+                const response = await fetch('/api/videos');
+                allVideos = await response.json();
+                
+                const mathsGrid = document.getElementById('mathsGrid');
+                const scienceGrid = document.getElementById('scienceGrid');
+                
+                mathsGrid.innerHTML = '';
+                scienceGrid.innerHTML = '';
+                
+                allVideos.forEach(video => {
+                    const card = document.createElement('a');
+                    card.className = 'video-card';
+                    card.href = video.url;
+                    card.target = '_blank';
+                    card.rel = 'noopener';
+                    card.setAttribute('data-keywords', video.keywords || '');
+                    
+                    card.innerHTML = `
+                        <div class="video-thumb"><i class="fas fa-play"></i></div>
+                        <h4>${video.title}</h4>
+                        <p>${video.description}</p>
+                        <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
+                    `;
+                    
+                    if (video.category === 'maths') {
+                        mathsGrid.appendChild(card);
+                    } else if (video.category === 'science') {
+                        scienceGrid.appendChild(card);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading videos:', error);
+                document.getElementById('mathsGrid').innerHTML = '<p style="color:#bdc9ff;">Error loading videos. Please try again later.</p>';
+                document.getElementById('scienceGrid').innerHTML = '<p style="color:#bdc9ff;">Error loading videos. Please try again later.</p>';
+            }
+        }
+
         // Client-side search showing matching videos in #searchResults
         (function(){
             const input = document.getElementById('examSearch');
             const clearBtn = document.getElementById('clearSearch');
             const resultsContainer = document.getElementById('searchResults');
-            const allCards = Array.from(document.querySelectorAll('.video-card'));
             const grids = Array.from(document.querySelectorAll('.video-grid'));
 
             function showOriginals(show){
@@ -144,9 +127,16 @@
 
                 // Use a grid wrapper for results
                 const gridHtml = ['<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;">'];
-                matches.forEach(card => {
-                    // Use outerHTML so links and structure are preserved
-                    gridHtml.push(card.outerHTML);
+                matches.forEach(video => {
+                    const cardHtml = `
+                        <a class="video-card" data-keywords="${video.keywords || ''}" href="${video.url}" target="_blank" rel="noopener">
+                            <div class="video-thumb"><i class="fas fa-play"></i></div>
+                            <h4>${video.title}</h4>
+                            <p>${video.description}</p>
+                            <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
+                        </a>
+                    `;
+                    gridHtml.push(cardHtml);
                 });
                 gridHtml.push('</div>');
 
@@ -165,13 +155,13 @@
 
                 // tokenized, normalized matching to handle plurals and simple variations
                 const tokens = s.split(/\s+/).map(normalizeWord).filter(Boolean);
-                const matches = allCards.filter(card => {
-                    const title = normalizeWord(card.querySelector('h4')?.innerText || '');
-                    const desc = normalizeWord(card.querySelector('p')?.innerText || '');
-                    const extra = normalizeWord(card.getAttribute('data-keywords') || '');
-                    const href = normalizeWord(card.getAttribute('href') || '');
+                const matches = allVideos.filter(video => {
+                    const title = normalizeWord(video.title || '');
+                    const desc = normalizeWord(video.description || '');
+                    const extra = normalizeWord(video.keywords || '');
+                    const category = normalizeWord(video.category || '');
 
-                    return tokens.some(t => title.includes(t) || desc.includes(t) || extra.includes(t) || href.includes(t));
+                    return tokens.some(t => title.includes(t) || desc.includes(t) || extra.includes(t) || category.includes(t));
                 });
 
                 // hide original grids while showing matches below the search
@@ -179,16 +169,15 @@
                 renderResults(matches, s);
             }
 
-            // Build suggestions list from cards (titles, descriptions, keywords)
+            // Build suggestions list from videos
             const suggestionBox = document.getElementById('examSuggestions');
             let suggestions = [];
             function buildSuggestions(){
                 const set = new Set();
-                allCards.forEach(card => {
-                    const title = (card.querySelector('h4')?.innerText || '').trim();
-                    const desc = (card.querySelector('p')?.innerText || '').trim();
-                    const extra = (card.getAttribute('data-keywords') || '')
-                        .split(',').map(s=>s.trim()).filter(Boolean);
+                allVideos.forEach(video => {
+                    const title = (video.title || '').trim();
+                    const desc = (video.description || '').trim();
+                    const extra = (video.keywords || '').split(',').map(s=>s.trim()).filter(Boolean);
                     if(title) title.split(/\s+|\W+/).forEach(t => t && set.add(t.toLowerCase()));
                     if(desc) desc.split(/\s+|\W+/).forEach(t => t && set.add(t.toLowerCase()));
                     extra.forEach(k => k.split(/\s+|\W+/).forEach(t => t && set.add(t.toLowerCase())));
@@ -196,8 +185,8 @@
                 // convert to array and include some multi-word suggestions from titles
                 suggestions = Array.from(set).slice(0, 500);
                 // also add full titles as suggestions for convenience
-                allCards.forEach(card => {
-                    const title = (card.querySelector('h4')?.innerText || '').trim();
+                allVideos.forEach(video => {
+                    const title = (video.title || '').trim();
                     if(title) suggestions.unshift(title);
                 });
                 // dedupe while keeping order
@@ -228,36 +217,39 @@
                 return exact;
             }
 
-            buildSuggestions();
+            // Load videos first, then set up search
+            loadVideos().then(() => {
+                buildSuggestions();
 
-            if(input){
-                input.addEventListener('input', e => {
-                    const q = e.target.value;
-                    const matches = getMatchesForQuery(q);
-                    showSuggestions(matches);
-                    filter(q);
-                });
+                if(input){
+                    input.addEventListener('input', e => {
+                        const q = e.target.value;
+                        const matches = getMatchesForQuery(q);
+                        showSuggestions(matches);
+                        filter(q);
+                    });
 
-                // keyboard navigation for suggestion box
-                let selIndex = -1;
-                input.addEventListener('keydown', (ev)=>{
-                    if(!suggestionBox || suggestionBox.style.display==='none') return;
-                    const items = suggestionBox.querySelectorAll('.suggest-item');
-                    if(ev.key === 'ArrowDown'){
-                        ev.preventDefault(); selIndex = Math.min(selIndex+1, items.length-1); items.forEach(i=>i.style.background=''); if(items[selIndex]) items[selIndex].style.background='rgba(255,255,255,0.04)';
-                    } else if(ev.key === 'ArrowUp'){
-                        ev.preventDefault(); selIndex = Math.max(selIndex-1, 0); items.forEach(i=>i.style.background=''); if(items[selIndex]) items[selIndex].style.background='rgba(255,255,255,0.04)';
-                    } else if(ev.key === 'Enter'){
-                        if(selIndex >= 0 && items[selIndex]){ ev.preventDefault(); items[selIndex].click(); selIndex = -1; }
-                    } else if(ev.key === 'Escape'){
-                        suggestionBox.style.display='none'; selIndex=-1;
-                    }
-                });
-            }
+                    // keyboard navigation for suggestion box
+                    let selIndex = -1;
+                    input.addEventListener('keydown', (ev)=>{
+                        if(!suggestionBox || suggestionBox.style.display==='none') return;
+                        const items = suggestionBox.querySelectorAll('.suggest-item');
+                        if(ev.key === 'ArrowDown'){
+                            ev.preventDefault(); selIndex = Math.min(selIndex+1, items.length-1); items.forEach(i=>i.style.background=''); if(items[selIndex]) items[selIndex].style.background='rgba(255,255,255,0.04)';
+                        } else if(ev.key === 'ArrowUp'){
+                            ev.preventDefault(); selIndex = Math.max(selIndex-1, 0); items.forEach(i=>i.style.background=''); if(items[selIndex]) items[selIndex].style.background='rgba(255,255,255,0.04)';
+                        } else if(ev.key === 'Enter'){
+                            if(selIndex >= 0 && items[selIndex]){ ev.preventDefault(); items[selIndex].click(); selIndex = -1; }
+                        } else if(ev.key === 'Escape'){
+                            suggestionBox.style.display='none'; selIndex=-1;
+                        }
+                    });
+                }
 
-            if(clearBtn){
-                clearBtn.addEventListener('click', () => { if(input) { input.value=''; filter(''); suggestionBox.style.display='none'; } });
-            }
+                if(clearBtn){
+                    clearBtn.addEventListener('click', () => { if(input) { input.value=''; filter(''); suggestionBox.style.display='none'; } });
+                }
+            });
         })();
     </script>
     <script src="chatbot.js"></script>
