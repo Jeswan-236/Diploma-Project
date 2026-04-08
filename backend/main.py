@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 import re
 import html
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled, VideoUnavailable
+import google.generativeai as genai
 
 # Load env variables from .env in the same directory
 env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -24,6 +25,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "AIzaSyAjPqJAl2QRbG7SHrAQh5IyCAmyXEAr9hQ")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 week
 
@@ -32,6 +34,12 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     raise ValueError("Supabase credentials not found. Please ensure .env is properly set up.")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Configure Gemini AI
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    print("Warning: GEMINI_API_KEY not set. AI features will not work.")
 
 # Initialize Flask
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "../frontend"), static_url_path="")
@@ -492,6 +500,55 @@ def fetch_youtube_video_details(video_id):
     }
 
 
+def process_video_content(video_id):
+    # Check if already processed
+    response = supabase.table("ai_video_content").select("*").eq("video_id", video_id).execute()
+    if response.data:
+        return {"message": "Video already processed", "video_id": video_id}
+
+    # Fetch transcript
+    transcript_data = fetch_transcript(video_id)
+    if not transcript_data or not transcript_data.get("available"):
+        raise ValueError("Transcript not available for this video")
+
+    transcript_raw = transcript_data["text"]
+
+    # Chunk the transcript into ~3000 words
+    words = transcript_raw.split()
+    chunk_size = 3000
+    chunks = []
+    for i in range(0, len(words), chunk_size):
+        chunk = " ".join(words[i:i + chunk_size])
+        chunks.append(chunk)
+
+    # Summarize each chunk using Gemini
+    summarized_segments = []
+    for chunk in chunks:
+        prompt = f"Summarize the following video transcript segment in a concise manner, capturing the key points and concepts:\n\n{chunk}"
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(prompt)
+            summary = response.text.strip()
+            summarized_segments.append(summary)
+        except Exception as e:
+            print(f"Error summarizing chunk: {e}")
+            summarized_segments.append("Summary not available")
+
+    # Aggregate into master_knowledge_base
+    master_knowledge_base = "\n\n".join(summarized_segments)
+
+    # Save to database
+    data = {
+        "video_id": video_id,
+        "transcript_raw": transcript_raw,
+        "summarized_segments": summarized_segments,
+        "master_knowledge_base": master_knowledge_base
+    }
+    supabase.table("ai_video_content").insert(data).execute()
+
+    return {"message": "Video processed successfully", "video_id": video_id}
+
+
 @app.route('/api/youtube/video', methods=['GET'])
 def get_youtube_video_details():
     video_id = request.args.get("video_id", "HcOc7P5BMi4").strip()
@@ -521,6 +578,54 @@ def get_videos():
     videos = response.data
     
     return jsonify(videos), 200
+
+
+@app.route('/api/ai/generate-quiz', methods=['POST'])
+@require_auth
+def generate_quiz():
+    data = request.get_json()
+    video_id = data.get("video_id")
+    if not video_id:
+        return jsonify({"detail": "video_id is required"}), 400
+
+    # Retrieve master_knowledge_base
+    response = supabase.table("ai_video_content").select("master_knowledge_base").eq("video_id", video_id).execute()
+    if not response.data:
+        return jsonify({"detail": "Video not processed yet. Please process the video first."}), 404
+
+    knowledge_base = response.data[0]["master_knowledge_base"]
+
+    # Generate quiz using Gemini
+    prompt = f"Based on this summarized context of a long video, generate 5 high-quality multiple-choice questions for the user. Each question should have 4 options (A, B, C, D) with one correct answer. Format as JSON array of objects with keys: question, options (array of 4 strings), correct_answer (index 0-3).\n\nContext:\n{knowledge_base}"
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        quiz_text = response.text.strip()
+        # Assume Gemini returns valid JSON
+        quiz = json.loads(quiz_text)
+        return jsonify({"video_id": video_id, "quiz": quiz}), 200
+    except Exception as e:
+        print(f"Error generating quiz: {e}")
+        return jsonify({"detail": "Failed to generate quiz"}), 500
+
+
+@app.route('/api/ai/process-video', methods=['POST'])
+@require_auth
+def process_video():
+    data = request.get_json()
+    video_id = data.get("video_id")
+    if not video_id:
+        return jsonify({"detail": "video_id is required"}), 400
+
+    try:
+        result = process_video_content(video_id)
+        return jsonify(result), 200
+    except ValueError as e:
+        return jsonify({"detail": str(e)}), 400
+    except Exception as e:
+        print(f"Error processing video: {e}")
+        return jsonify({"detail": "Failed to process video"}), 500
+
 
 # Error handlers
 @app.errorhandler(404)

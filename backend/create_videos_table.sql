@@ -29,3 +29,11 @@ INSERT INTO videos (title, description, url, keywords, category) VALUES
 ('Chemistry Fundamentals', 'Atoms, reactions, and practice.', 'https://youtu.be/5iTOphGnCtg?si=gbTxv4Fa3RirGvZK', 'chemistry,atoms,reactions,periodic', 'science'),
 ('Biology Overview', 'Cells, systems, and basics.', 'https://youtu.be/URUJD5NEXC8?si=Eli07qvPUYJMMtj2', 'biology,cells,systems,ecology', 'science')
 ON CONFLICT DO NOTHING;
+
+-- Create the ai_video_content table for AI learning feature
+CREATE TABLE IF NOT EXISTS ai_video_content (
+    video_id TEXT PRIMARY KEY,
+    transcript_raw TEXT,
+    summarized_segments JSONB,
+    master_knowledge_base TEXT
+);
