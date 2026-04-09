@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 import re
 import html
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled, VideoUnavailable
-import google.generativeai as genai
+import google.genai as genai
 
 # Load env variables from .env in the same directory
 env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -37,8 +37,9 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Configure Gemini AI
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+    genai_client = genai.Client(api_key=GEMINI_API_KEY)
 else:
+    genai_client = None
     print("Warning: GEMINI_API_KEY not set. AI features will not work.")
 
 # Initialize Flask
@@ -48,11 +49,11 @@ app.config['JSON_SORT_KEYS'] = False
 # Configure CORS
 frontend_origins = os.getenv(
     "FRONTEND_ORIGINS",
-    "http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:8000,http://localhost:8000"
+    "http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:8000,http://localhost:8000,file://"
 )
 allow_origins = [origin.strip() for origin in frontend_origins.split(",") if origin.strip()]
 if not allow_origins:
-    allow_origins = ["http://127.0.0.1:5500", "http://localhost:5500"]
+    allow_origins = ["http://127.0.0.1:5500", "http://localhost:5500", "file://"]
 
 CORS(app, resources={r"/api/*": {"origins": allow_origins}})
 
@@ -118,7 +119,7 @@ def require_admin(f):
 @app.route('/')
 def read_root():
     if request.accept_mimetypes.accept_html >= request.accept_mimetypes.accept_json:
-        return app.send_static_file('youtube_details.html')
+        return app.send_static_file('demo.html')
     return jsonify({"status": "online", "message": "SkillStalker API is running"})
 
 @app.route('/api/auth/register', methods=['POST'])
@@ -285,13 +286,79 @@ def create_test_user(current_user):
     supabase.table("users").insert(new_user).execute()
     return jsonify({"message": "Test user generated", "username": test_username}), 201
 
-@app.route('/api/admin/users/clear', methods=['DELETE'])
+@app.route('/api/admin/videos', methods=['POST'])
 @require_auth
 @require_admin
-def clear_all_users(current_user):
-    # Delete everyone EXCEPT skillstalkeradmin
-    supabase.table("users").delete().neq("username", "skillstalkeradmin").execute()
-    return jsonify({"message": "All non-admin users deleted successfully"}), 200
+def create_video(current_user):
+    data = request.get_json()
+
+    if not data or 'title' not in data or 'url' not in data or 'category' not in data:
+        return jsonify({"detail": "title, url, and category are required"}), 400
+
+    new_video = {
+        "title": data['title'],
+        "description": data.get('description', ''),
+        "url": data['url'],
+        "category": data['category'],
+        "keywords": data.get('keywords', ''),
+        "thumbnail_url": data.get('thumbnail_url')
+    }
+
+    insert_resp = supabase.table("videos").insert(new_video).execute()
+    if not insert_resp.data:
+        return jsonify({"detail": "Failed to create video"}), 500
+
+    return jsonify({"message": "Video created successfully", "video": insert_resp.data[0]}), 201
+
+@app.route('/api/admin/videos/<video_id>', methods=['PUT'])
+@require_auth
+@require_admin
+def update_video(current_user, video_id):
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"detail": "No data provided"}), 400
+    
+    # Update the video
+    update_data = {}
+    if 'title' in data:
+        update_data['title'] = data['title']
+    if 'description' in data:
+        update_data['description'] = data['description']
+    if 'url' in data:
+        update_data['url'] = data['url']
+    if 'category' in data:
+        update_data['category'] = data['category']
+    if 'keywords' in data:
+        update_data['keywords'] = data['keywords']
+    if 'thumbnail_url' in data:
+        update_data['thumbnail_url'] = data['thumbnail_url']
+    
+    if not update_data:
+        return jsonify({"detail": "No valid fields to update"}), 400
+    
+    update_resp = supabase.table("videos").update(update_data).eq("id", video_id).execute()
+    
+    if not update_resp.data:
+        return jsonify({"detail": "Video not found or update failed"}), 404
+    
+    return jsonify({"message": "Video updated successfully", "video": update_resp.data[0]}), 200
+
+@app.route('/api/admin/videos/<video_id>', methods=['DELETE'])
+@require_auth
+@require_admin
+def delete_video(current_user, video_id):
+    delete_resp = supabase.table("videos").delete().eq("id", video_id).execute()
+    if not delete_resp.data:
+        return jsonify({"detail": "Video not found or delete failed"}), 404
+    return jsonify({"message": "Video deleted successfully"}), 200
+
+@app.route('/api/videos/<video_id>', methods=['GET'])
+def get_video(video_id):
+    response = supabase.table("videos").select("*").eq("id", video_id).execute()
+    if not response.data:
+        return jsonify({"detail": "Video not found"}), 404
+    return jsonify(response.data[0]), 200
 
 # YouTube helper utilities
 
@@ -526,9 +593,14 @@ def process_video_content(video_id):
     for chunk in chunks:
         prompt = f"Summarize the following video transcript segment in a concise manner, capturing the key points and concepts:\n\n{chunk}"
         try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(prompt)
-            summary = response.text.strip()
+            if genai_client:
+                response = genai_client.models.generate_content(
+                    model='gemini-1.5-flash',
+                    contents=prompt
+                )
+                summary = response.text.strip()
+            else:
+                summary = "AI summarization not available - API key not configured"
             summarized_segments.append(summary)
         except Exception as e:
             print(f"Error summarizing chunk: {e}")
@@ -598,9 +670,14 @@ def generate_quiz():
     # Generate quiz using Gemini
     prompt = f"Based on this summarized context of a long video, generate 5 high-quality multiple-choice questions for the user. Each question should have 4 options (A, B, C, D) with one correct answer. Format as JSON array of objects with keys: question, options (array of 4 strings), correct_answer (index 0-3).\n\nContext:\n{knowledge_base}"
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(prompt)
-        quiz_text = response.text.strip()
+        if genai_client:
+            response = genai_client.models.generate_content(
+                model='gemini-1.5-flash',
+                contents=prompt
+            )
+            quiz_text = response.text.strip()
+        else:
+            return jsonify({"detail": "AI features not available - API key not configured"}), 500
         # Assume Gemini returns valid JSON
         quiz = json.loads(quiz_text)
         return jsonify({"video_id": video_id, "quiz": quiz}), 200

@@ -50,6 +50,20 @@
         <p><i class="fas fa-brain"></i> Strengthen fundamentals — one session at a time.</p>
     </footer>
 
+    <!-- Video Player Modal -->
+    <div id="videoModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeVideoModal()">&times;</span>
+            <h3 id="modalVideoTitle"></h3>
+            <div id="videoPlayerContainer" style="margin:1rem 0;"></div>
+            <div style="text-align:center;margin-top:1rem;">
+                <a id="externalVideoLink" href="#" target="_blank" rel="noopener" class="glow-btn" style="text-decoration:none;">
+                    <i class="fas fa-external-link-alt"></i> Open on YouTube
+                </a>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allVideos = [];
 
@@ -66,12 +80,10 @@
                 scienceGrid.innerHTML = '';
                 
                 allVideos.forEach(video => {
-                    const card = document.createElement('a');
+                    const card = document.createElement('div');
                     card.className = 'video-card';
-                    card.href = video.url;
-                    card.target = '_blank';
-                    card.rel = 'noopener';
                     card.setAttribute('data-keywords', video.keywords || '');
+                    card.addEventListener('click', () => openVideoModal(video));
                     
                     card.innerHTML = `
                         <div class="video-thumb"><i class="fas fa-play"></i></div>
@@ -91,6 +103,56 @@
                 document.getElementById('mathsGrid').innerHTML = '<p style="color:#bdc9ff;">Error loading videos. Please try again later.</p>';
                 document.getElementById('scienceGrid').innerHTML = '<p style="color:#bdc9ff;">Error loading videos. Please try again later.</p>';
             }
+        }
+
+        function openVideoModal(video) {
+            document.getElementById('modalVideoTitle').textContent = video.title;
+            const videoId = extractYouTubeVideoId(video.url);
+            const container = document.getElementById('videoPlayerContainer');
+            const externalLink = document.getElementById('externalVideoLink');
+
+            if (videoId) {
+                const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                container.innerHTML = `
+                    <iframe width="100%" height="400"
+                            src="${embedUrl}"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                    </iframe>
+                `;
+                externalLink.href = `https://www.youtube.com/watch?v=${videoId}`;
+                externalLink.textContent = 'Open on YouTube';
+                externalLink.style.display = 'inline-block';
+            } else {
+                container.innerHTML = `
+                    <p style="color:#bdc9ff;">Unable to load video player for this resource. You can open it on YouTube instead.</p>
+                `;
+                externalLink.href = video.url;
+                externalLink.textContent = 'Open on YouTube';
+                externalLink.style.display = 'inline-block';
+            }
+
+            document.getElementById('videoModal').style.display = 'block';
+        }
+
+        function closeVideoModal() {
+            document.getElementById('videoModal').style.display = 'none';
+            document.getElementById('videoPlayerContainer').innerHTML = '';
+        }
+
+        function extractYouTubeVideoId(url) {
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+                /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/
+            ];
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            return null;
         }
 
         // Client-side search showing matching videos in #searchResults
@@ -248,6 +310,13 @@
 
                 if(clearBtn){
                     clearBtn.addEventListener('click', () => { if(input) { input.value=''; filter(''); suggestionBox.style.display='none'; } });
+                }
+            });
+
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('videoModal');
+                if (modal && event.target === modal) {
+                    closeVideoModal();
                 }
             });
         })();

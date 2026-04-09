@@ -11,6 +11,77 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="demo2.css?v=4">
+    <style>
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, rgba(10, 12, 25, 0.95), rgba(2, 6, 18, 0.95));
+            margin: 5% auto;
+            padding: 2rem;
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: -10px;
+        }
+        
+        .close-modal:hover {
+            color: #fff;
+        }
+        
+        .video-card.completed {
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.1) !important;
+        }
+        
+        .video-card.completed .video-thumb {
+            background: #10b981;
+        }
+        
+        .video-card.completed .video-thumb i {
+            color: white;
+        }
+        
+        .completion-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
 </head>
 
 <body>
@@ -26,8 +97,7 @@
     <main style="padding:2rem;">
         <section class="section">
             <h2 class="section-title"><i class="fas fa-code"></i> Coding Practice — HTML, CSS, JavaScript, Python</h2>
-            <p style="color:#bdc9ff; margin-bottom:1rem;">Select a language to view curated video classes. Cards link to
-                YouTube search results for quick access.</p>
+            <p style="color:#bdc9ff; margin-bottom:1rem;">Select a video to watch and mark as complete when finished.</p>
 
             <div class="video-grid" id="videoGrid"
                 style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;">
@@ -36,31 +106,57 @@
         </section>
     </main>
 
+    <!-- Video Player Modal -->
+    <div id="videoModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeVideoModal()">&times;</span>
+            <h3 id="modalVideoTitle"></h3>
+            <div id="videoPlayerContainer" style="margin:1rem 0;">
+                <!-- YouTube player will be embedded here -->
+            </div>
+            <div style="text-align:center;margin-top:1rem;">
+                <button id="completeVideoBtn" class="glow-btn" onclick="markVideoComplete()">
+                    <i class="fas fa-check"></i> Mark as Complete
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer style="padding:1rem;text-align:center;color:#9fb0ff;">
         <p><i class="fas fa-laptop-code"></i> Practice-by-doing: watch, code, repeat.</p>
     </footer>
     <script>
+        let currentVideoId = null;
+        let completedVideos = new Set();
+        
         // Load videos from database
         async function loadVideos() {
             try {
                 const response = await fetch('/api/videos?category=coding');
                 const videos = await response.json();
                 
+                // Load user progress to check completed videos
+                await loadUserProgress();
+                
                 const grid = document.getElementById('videoGrid');
                 grid.innerHTML = '';
                 
                 videos.forEach(video => {
-                    const card = document.createElement('a');
-                    card.className = 'video-card';
-                    card.href = video.url;
-                    card.target = '_blank';
-                    card.rel = 'noopener';
+                    const isCompleted = completedVideos.has(video.id);
+                    const card = document.createElement('div');
+                    card.className = `video-card ${isCompleted ? 'completed' : ''}`;
+                    card.onclick = () => openVideoModal(video);
                     
                     card.innerHTML = `
-                        <div class="video-thumb"><i class="fas fa-play"></i></div>
+                        <div class="video-thumb">
+                            <i class="fas fa-play"></i>
+                            ${isCompleted ? '<div class="completion-badge"><i class="fas fa-check"></i></div>' : ''}
+                        </div>
                         <h4>${video.title}</h4>
                         <p>${video.description}</p>
-                        <div class="video-link"><i class="fab fa-youtube"></i> Open on YouTube</div>
+                        <div class="video-link">
+                            <i class="fas fa-play-circle"></i> ${isCompleted ? 'Watch Again' : 'Watch Video'}
+                        </div>
                     `;
                     
                     grid.appendChild(card);
@@ -71,8 +167,165 @@
             }
         }
         
+        // Load user progress to get completed videos
+        async function loadUserProgress() {
+            try {
+                const token = localStorage.getItem('ss_token');
+                if (!token) return;
+                
+                const response = await fetch('/api/user/progress', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const profileData = data.profile_data || {};
+                    const completed = profileData.completedVideos || [];
+                    completedVideos = new Set(completed);
+                }
+            } catch (error) {
+                console.error('Error loading progress:', error);
+            }
+        }
+        
+        // Open video modal
+        function openVideoModal(video) {
+            currentVideoId = video.id;
+            document.getElementById('modalVideoTitle').textContent = video.title;
+            
+            // Extract video ID from YouTube URL
+            const videoId = extractYouTubeVideoId(video.url);
+            if (videoId) {
+                const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                document.getElementById('videoPlayerContainer').innerHTML = `
+                    <iframe width="100%" height="400" 
+                            src="${embedUrl}" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                    </iframe>
+                `;
+            } else {
+                document.getElementById('videoPlayerContainer').innerHTML = `
+                    <p style="color:#bdc9ff;">Unable to load video player. 
+                    <a href="${video.url}" target="_blank" style="color:#8b5cf6;">Open on YouTube</a></p>
+                `;
+            }
+            
+            document.getElementById('videoModal').style.display = 'block';
+        }
+        
+        // Close video modal
+        function closeVideoModal() {
+            document.getElementById('videoModal').style.display = 'none';
+            document.getElementById('videoPlayerContainer').innerHTML = '';
+            currentVideoId = null;
+        }
+        
+        // Extract YouTube video ID from various URL formats
+        function extractYouTubeVideoId(url) {
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+                /youtube\.com\/results\?search_query=([^&]+)/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    // If it's a search query, we can't embed it directly
+                    if (url.includes('results?search_query=')) {
+                        return null;
+                    }
+                    return match[1];
+                }
+            }
+            return null;
+        }
+        
+        // Mark video as complete
+        async function markVideoComplete() {
+            if (!currentVideoId) return;
+            
+            try {
+                const token = localStorage.getItem('ss_token');
+                if (!token) {
+                    alert('Please log in to track video progress.');
+                    return;
+                }
+                
+                // Add to completed videos set
+                completedVideos.add(currentVideoId);
+                
+                // Save progress to backend
+                const profileData = {
+                    completedVideos: Array.from(completedVideos)
+                };
+                
+                const response = await fetch('/api/user/progress', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ profile_data: profileData })
+                });
+                
+                if (response.ok) {
+                    // Update UI
+                    loadVideos();
+                    closeVideoModal();
+                    
+                    // Show success message
+                    showToast('✅ Video marked as complete!', false);
+                } else {
+                    throw new Error('Failed to save progress');
+                }
+            } catch (error) {
+                console.error('Error marking video complete:', error);
+                showToast('❌ Failed to save progress. Please try again.', true);
+            }
+        }
+        
+        // Toast notification function
+        function showToast(message, isError = false) {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${isError ? '#ef4444' : '#10b981'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease-out;
+            `;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+        
         // Load videos when page loads
         document.addEventListener('DOMContentLoaded', loadVideos);
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('videoModal');
+            if (event.target === modal) {
+                closeVideoModal();
+            }
+        }
     </script>
     <script src="chatbot.js"></script>
 </body>
