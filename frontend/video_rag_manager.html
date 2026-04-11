@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coding Practice · skill stalker</title>
+    <title>Video RAG Manager · skill stalker</title>
+    <meta name="description" content="Manage AI-powered video learning with RAG embeddings. Process video transcripts for intelligent retrieval-augmented generation.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap"
@@ -219,6 +220,91 @@
             margin-left: 0.5rem;
         }
 
+        /* AI Learn Button Styles */
+        .ai-learn-btn {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1, #4f46e5);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 999px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-learn-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .ai-learn-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .ai-learn-btn:hover:not(:disabled) {
+            box-shadow: 0 5px 20px rgba(139, 92, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .ai-learn-btn:disabled {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(99, 102, 241, 0.3));
+            color: rgba(255, 255, 255, 0.6);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .ai-learn-btn .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Category filter pills */
+        .filter-bar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-pill {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: #a9b3ff;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-pill:hover,
+        .filter-pill.active {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            color: #e6ecff;
+        }
+
         @media (max-width: 768px) {
             .detail-section {
                 padding: 1.5rem;
@@ -239,7 +325,7 @@
 <body>
     <header>
         <nav class="navbar">
-            <div class="logo"><i class="fas fa-code-branch"></i> skill stalker</div>
+            <div class="logo"><i class="fas fa-brain"></i> skill stalker — RAG Manager</div>
             <div class="nav-links">
                 <a href="demo.html"><i class="fas fa-arrow-left"></i> back</a>
             </div>
@@ -248,8 +334,20 @@
 
     <main style="padding:2rem;">
         <section class="section">
-            <h2 id="practiceTitle" class="section-title"><i class="fas fa-code"></i> Coding Practice — HTML, CSS, JavaScript, Python</h2>
-            <p id="practiceSubtitle" style="color:#bdc9ff; margin-bottom:1.5rem;">Select a video to watch and learn. Mark as complete when finished.</p>
+            <h1 id="practiceTitle" class="section-title" style="font-size:1.5rem;">
+                <i class="fas fa-robot"></i> Video RAG Manager — Process Videos for AI Learning
+            </h1>
+            <p id="practiceSubtitle" style="color:#bdc9ff; margin-bottom:1.5rem;">
+                Browse all videos in the library. Select a video to view its details and process its transcript for RAG-powered AI learning.
+            </p>
+
+            <!-- Category Filter -->
+            <div id="filterBar" class="filter-bar">
+                <button class="filter-pill active" data-category="all">All</button>
+                <button class="filter-pill" data-category="coding">Coding</button>
+                <button class="filter-pill" data-category="maths">Maths</button>
+                <button class="filter-pill" data-category="science">Science</button>
+            </div>
 
             <div id="videoGrid" class="video-grid">
                 <!-- Videos loaded here -->
@@ -281,6 +379,7 @@
                     <div class="meta-item"><span>Views</span><strong id="viewCount"></strong></div>
                     <div class="meta-item"><span>Likes</span><strong id="likeCount"></strong></div>
                     <div class="meta-item"><span>Published</span><strong id="publishedAt"></strong></div>
+                    <div class="meta-item"><span>Category</span><strong id="videoCategory"></strong></div>
                 </div>
 
                 <div class="section-title">
@@ -288,8 +387,11 @@
                 </div>
                 <div class="description" id="description"></div>
 
-                <div class="section-title">
-                    <h3 style="margin:0;">Transcript</h3>
+                <div class="section-title" style="justify-content: space-between;">
+                    <h3 style="margin:0;"><i class="fas fa-closed-captioning"></i> Transcript</h3>
+                    <button id="aiLearnBtn" class="ai-learn-btn" onclick="handleAiLearn()">
+                        <i class="fas fa-brain"></i> AI Learn
+                    </button>
                 </div>
                 <div class="description transcript-section" id="transcript"></div>
             </div>
@@ -297,56 +399,57 @@
     </main>
 
     <footer style="padding:1rem;text-align:center;color:#9fb0ff;">
-        <p><i class="fas fa-laptop-code"></i> Practice-by-doing: watch, code, repeat.</p>
+        <p><i class="fas fa-robot"></i> RAG Manager: process video transcripts into AI-ready embeddings.</p>
     </footer>
 
     <script>
         let allVideos = [];
+        let filteredVideos = [];
         let completedVideos = new Set();
         let currentVideoId = null;
-        const selectedCourseId = new URLSearchParams(window.location.search).get('course');
+        let currentVideoDbId = null; // The database UUID for the video record
+        let currentTranscriptText = '';
+        let activeFilter = 'all';
 
-        function formatCourseId(id) {
-            if (!id) return null;
-            return id
-                .replace(/^course-/, '')
-                .replace(/-/g, ' ')
-                .replace(/\b\w/g, (c) => c.toUpperCase());
+        const API_BASE = 'http://127.0.0.1:8000';
+
+        // ===== Category Filter =====
+        document.getElementById('filterBar').addEventListener('click', (e) => {
+            if (!e.target.classList.contains('filter-pill')) return;
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            e.target.classList.add('active');
+            activeFilter = e.target.dataset.category;
+            applyFilter();
+        });
+
+        function applyFilter() {
+            if (activeFilter === 'all') {
+                filteredVideos = [...allVideos];
+            } else {
+                filteredVideos = allVideos.filter(v => v.category === activeFilter);
+            }
+            renderVideos();
         }
 
-        function updatePracticeHeading() {
-            if (!selectedCourseId) return;
-            const courseName = formatCourseId(selectedCourseId);
-            const title = document.getElementById('practiceTitle');
-            const subtitle = document.getElementById('practiceSubtitle');
-            if (title) title.textContent = `Practice — ${courseName}`;
-            if (subtitle) subtitle.textContent = `Selected course: ${courseName}. Choose a related video and mark it complete.`;
-        }
-
+        // ===== Load Videos from /api/videos (all videos, not enrollment-based) =====
         async function loadVideos() {
             try {
                 const token = localStorage.getItem('ss_token');
                 if (!token) {
-                    document.getElementById('videoGrid').innerHTML = '<p style="color:#bdc9ff;grid-column: 1 / -1;">Please log in from the portal to view your enrolled courses.</p>';
+                    document.getElementById('videoGrid').innerHTML = '<p style="color:#bdc9ff;grid-column: 1 / -1;">Please log in from the portal to access the RAG Manager.</p>';
                     return;
                 }
-                
-                const response = await fetch('http://127.0.0.1:8000/api/user/enrollments', {
+
+                const response = await fetch(`${API_BASE}/api/videos`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                
-                if (!response.ok) throw new Error("Failed to fetch");
-                
-                const enrolledVideos = await response.json();
-                allVideos = enrolledVideos.filter(v => v.category === 'coding');
-                
+
+                if (!response.ok) throw new Error("Failed to fetch videos");
+
+                allVideos = await response.json();
                 await loadUserProgress();
-                
-                if (allVideos.length === 0) {
-                    document.getElementById('videoGrid').innerHTML = '<p style="color:#8b95d7;grid-column: 1 / -1;text-align: center;padding: 2rem;">You have not enrolled in any coding courses yet. Head to the Course Library to get started!</p>';
-                } else {
-                    renderVideos();
-                }
+                applyFilter();
+
             } catch (error) {
                 console.error('Error loading videos:', error);
                 document.getElementById('videoGrid').innerHTML = '<p style="color:#ff6b6b;grid-column: 1 / -1;">Error loading videos. Please try again later.</p>';
@@ -358,7 +461,7 @@
                 const token = localStorage.getItem('ss_token');
                 if (!token) return;
 
-                const response = await fetch('http://127.0.0.1:8000/api/user/progress', {
+                const response = await fetch(`${API_BASE}/api/user/progress`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -376,7 +479,12 @@
             const grid = document.getElementById('videoGrid');
             grid.innerHTML = '';
 
-            allVideos.forEach(video => {
+            if (filteredVideos.length === 0) {
+                grid.innerHTML = '<p style="color:#8b95d7;grid-column: 1 / -1;text-align: center;padding: 2rem;">No videos found for this category.</p>';
+                return;
+            }
+
+            filteredVideos.forEach(video => {
                 const isCompleted = completedVideos.has(video.id);
                 const card = document.createElement('div');
                 card.className = 'video-card';
@@ -384,12 +492,14 @@
 
                 const thumbnail = video.thumbnail_url || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE2MCIgZmlsbD0iIzFiMjAzZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2MzY2ZjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBUaHVtYm5haWw8L3RleHQ+PC9zdmc+';
                 const badge = isCompleted ? `<span class="completion-badge"><i class="fas fa-check"></i> Done</span>` : '';
+                const categoryBadge = video.category ? `<span style="display:inline-block;background:rgba(99,102,241,0.15);color:#a9b3ff;padding:0.15rem 0.5rem;border-radius:6px;font-size:0.7rem;font-weight:600;text-transform:uppercase;margin-bottom:0.35rem;">${video.category}</span>` : '';
 
                 card.innerHTML = `
                     <div class="video-thumb">
                         <img src="${thumbnail}" alt="${video.title}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE2MCIgZmlsbD0iIzFiMjAzZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2MzY2ZjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5WaWRlbzwvdGV4dD48L3N2Zz4='">
                     </div>
                     <div class="video-content">
+                        ${categoryBadge}
                         <div class="video-title">${video.title || 'Untitled Video'}${badge}</div>
                         <p class="video-desc">${video.description || 'No description available.'}</p>
                         <div class="video-link"><i class="fas fa-play-circle"></i> View Details</div>
@@ -426,20 +536,27 @@
 
         async function showDetail(video) {
             currentVideoId = video.id;
+            currentVideoDbId = video.id;
+            currentTranscriptText = '';
+
             const detailSection = document.getElementById('detailSection');
             detailSection.classList.add('active');
             document.getElementById('watchLink').href = video.url;
+            document.getElementById('videoCategory').textContent = (video.category || 'N/A').toUpperCase();
+
+            // Reset AI Learn button
+            resetAiLearnButton();
 
             try {
                 const youtubeVideoId = extractYouTubeVideoId(video.url);
                 let response;
 
                 if (youtubeVideoId) {
-                    response = await fetch(`http://127.0.0.1:8000/api/youtube/video?video_id=${encodeURIComponent(youtubeVideoId)}`);
+                    response = await fetch(`${API_BASE}/api/youtube/video?video_id=${encodeURIComponent(youtubeVideoId)}`);
                 } else {
                     const searchQuery = extractYouTubeSearchQuery(video.url);
                     if (searchQuery) {
-                        response = await fetch(`http://127.0.0.1:8000/api/youtube/video?query=${encodeURIComponent(searchQuery)}`);
+                        response = await fetch(`${API_BASE}/api/youtube/video?query=${encodeURIComponent(searchQuery)}`);
                     }
                 }
 
@@ -470,13 +587,20 @@
                 document.getElementById('likeCount').textContent = Number(data.like_count || 0).toLocaleString();
                 document.getElementById('publishedAt').textContent = data.published_at ? new Date(data.published_at).toLocaleDateString() : 'Unknown';
                 document.getElementById('description').textContent = data.description || 'No description available.';
-                document.getElementById('transcript').textContent = data.transcript?.available ? data.transcript.text : 'Transcript not available for this video.';
+
+                if (data.transcript?.available) {
+                    currentTranscriptText = data.transcript.text;
+                    document.getElementById('transcript').textContent = data.transcript.text;
+                } else {
+                    currentTranscriptText = '';
+                    document.getElementById('transcript').textContent = 'Transcript not available for this video.';
+                }
 
                 updateCompleteButton();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (error) {
                 console.error('Error loading video details:', error);
-                alert('Failed to load video details. Please try again.');
+                showToast('❌ Failed to load video details. Please try again.', true);
             }
         }
 
@@ -484,6 +608,8 @@
             document.getElementById('detailSection').classList.remove('active');
             document.getElementById('videoFrame').src = '';
             currentVideoId = null;
+            currentVideoDbId = null;
+            currentTranscriptText = '';
         }
 
         function updateCompleteButton() {
@@ -512,7 +638,7 @@
                 completedVideos.add(currentVideoId);
                 const profileData = { completedVideos: Array.from(completedVideos) };
 
-                const response = await fetch('http://127.0.0.1:8000/api/user/progress', {
+                const response = await fetch(`${API_BASE}/api/user/progress`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -534,29 +660,106 @@
             }
         }
 
+        // ===== AI Learn Button Handler =====
+        function resetAiLearnButton() {
+            const btn = document.getElementById('aiLearnBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-brain"></i> AI Learn';
+        }
+
+        async function handleAiLearn() {
+            const btn = document.getElementById('aiLearnBtn');
+
+            // Validate: must have a video selected with a transcript
+            if (!currentVideoDbId) {
+                showToast('❌ No video selected.', true);
+                return;
+            }
+
+            if (!currentTranscriptText || currentTranscriptText.trim().length === 0) {
+                showToast('❌ No transcript available for this video. Cannot process for AI learning.', true);
+                return;
+            }
+
+            const token = localStorage.getItem('ss_token');
+            if (!token) {
+                showToast('❌ Please log in to use AI Learn.', true);
+                return;
+            }
+
+            // Disable button and show processing state
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Processing AI Context...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/ai/rag-process-video`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        video_id: currentVideoDbId,
+                        transcript: currentTranscriptText
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> AI Context Saved!';
+                    btn.disabled = true;
+                    showToast('✅ ' + (result.message || 'Video processed for AI learning successfully!'), false);
+                } else {
+                    // Handle 4xx / 5xx errors
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMsg = errorData.detail || `Server error (${response.status})`;
+                    throw new Error(errorMsg);
+                }
+            } catch (error) {
+                console.error('AI Learn error:', error);
+                // Re-enable button on failure
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-brain"></i> AI Learn';
+                showToast(`❌ ${error.message || 'Failed to process video for AI learning.'}`, true);
+            }
+        }
+
         function showToast(message, isError = false) {
             const toast = document.createElement('div');
             toast.style.cssText = `
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: ${isError ? '#ef4444' : '#10b981'};
+                background: ${isError ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)'};
                 color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
+                padding: 14px 24px;
+                border-radius: 12px;
                 font-weight: 600;
                 z-index: 10000;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+                font-size: 0.95rem;
+                max-width: 420px;
+                line-height: 1.4;
+                animation: slideIn 0.3s ease;
             `;
             toast.textContent = message;
             document.body.appendChild(toast);
+
+            // Add slideIn animation
+            const style = document.createElement('style');
+            style.textContent = `@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`;
+            document.head.appendChild(style);
+
             setTimeout(() => {
-                document.body.removeChild(toast);
-            }, 3000);
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => {
+                    if (toast.parentNode) document.body.removeChild(toast);
+                    if (style.parentNode) document.head.removeChild(style);
+                }, 300);
+            }, 3500);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            updatePracticeHeading();
             loadVideos();
         });
     </script>

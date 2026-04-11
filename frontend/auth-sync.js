@@ -15,6 +15,7 @@ function getLocalProgressData() {
         aiStudySchedule: parseJsonStorage(localStorage.getItem('aiStudySchedule')) || null,
         streakDays: parseJsonStorage(localStorage.getItem('streakDays')) || null,
         calendarTopics: parseJsonStorage(localStorage.getItem('calendarTopics')) || null,
+        enrolledCourses: parseJsonStorage(localStorage.getItem('enrolledCourses')) || [],
     };
 }
 
@@ -30,6 +31,9 @@ function saveLocalProgressData(profileData) {
     }
     if (profileData.calendarTopics !== undefined && profileData.calendarTopics !== null) {
         localStorage.setItem('calendarTopics', JSON.stringify(profileData.calendarTopics));
+    }
+    if (profileData.enrolledCourses !== undefined && profileData.enrolledCourses !== null) {
+        localStorage.setItem('enrolledCourses', JSON.stringify(profileData.enrolledCourses));
     }
 }
 

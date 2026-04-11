@@ -30,6 +30,16 @@ INSERT INTO videos (title, description, url, keywords, category) VALUES
 ('Biology Overview', 'Cells, systems, and basics.', 'https://youtu.be/URUJD5NEXC8?si=Eli07qvPUYJMMtj2', 'biology,cells,systems,ecology', 'science')
 ON CONFLICT DO NOTHING;
 
+-- Backfill missing YouTube thumbnails from the video URL
+UPDATE videos
+SET thumbnail_url = CASE
+    WHEN url ILIKE '%youtu.be/%' THEN concat('https://img.youtube.com/vi/', substring(url FROM 'youtu\.be/([^?&/]+)'), '/hqdefault.jpg')
+    WHEN url ILIKE '%youtube.com/%' THEN concat('https://img.youtube.com/vi/', substring(url FROM 'v=([^&]+)'), '/hqdefault.jpg')
+    ELSE thumbnail_url
+END
+WHERE thumbnail_url IS NULL
+  AND (url ILIKE '%youtu.be/%' OR url ILIKE '%youtube.com/%');
+
 -- Create the ai_video_content table for AI learning feature
 CREATE TABLE IF NOT EXISTS ai_video_content (
     video_id TEXT PRIMARY KEY,

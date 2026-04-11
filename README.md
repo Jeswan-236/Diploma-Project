@@ -2,11 +2,11 @@
 
 ## Overview
 
-This repository contains a learning portal for Skill Stalker with a FastAPI backend and frontend demo pages. The backend manages authentication via Supabase and JWTs, while the frontend provides a student dashboard, AI helper widget, and study resources.
+This repository contains a learning portal for Skill Stalker with a Flask backend and frontend demo pages. The backend manages authentication via Supabase and JWTs, while the frontend provides a student dashboard, AI helper widget, and study resources.
 
 ## Structure
 
-- `backend/` — FastAPI application and environment configuration
+- `backend/` — Flask application and environment configuration
 - `frontend/` — static HTML, CSS, and JavaScript demo pages
 
 ## Requirements

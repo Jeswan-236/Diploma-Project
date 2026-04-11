@@ -201,7 +201,7 @@
 
             <div id="detailSection" style="display:none;">
                 <div class="video-frame">
-                    <iframe id="videoFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <iframe id="videoFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; compute-pressure" allowfullscreen></iframe>
                 </div>
 
                 <div class="button-row">
@@ -256,7 +256,7 @@
             statusEl.textContent = 'Loading video details...';
             detailSection.style.display = 'none';
             try {
-                const response = await fetch(`/api/youtube/video?video_id=${encodeURIComponent(videoId)}`);
+                const response = await fetch(`http://127.0.0.1:8000/api/youtube/video?video_id=${encodeURIComponent(videoId)}`);
                 if (!response.ok) {
                     const error = await response.json();
                     statusEl.textContent = `Error: ${error.detail || response.statusText}`;

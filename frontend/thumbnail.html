@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thumbnail Updater - Skill Stalker</title>
+    <link rel="stylesheet" href="demo2.css">
+    <style>
+        .admin-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            color: #ffffff;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.2);
+            color: #ffffff;
+            font-size: 1rem;
+        }
+        
+        select option {
+            background: #2a2a35;
+            color: #fff;
+        }
+
+        .btn {
+            background: rgba(99, 102, 241, 0.8);
+            border: none;
+            color: #ffffff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: rgba(99, 102, 241, 1);
+        }
+
+        .btn:disabled {
+            background: rgba(150, 150, 150, 0.5);
+            cursor: not-allowed;
+        }
+
+        #thumbnail-preview {
+            margin-top: 1.5rem;
+            display: none;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+        }
+
+        .status.error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h2 style="text-align: center; margin-bottom: 2rem;">Update Video Thumbnail</h2>
+        
+        <div class="form-group">
+            <label for="video-select">Select Video:</label>
+            <select id="video-select" onchange="onVideoSelect()">
+                <option value="">-- Loading Videos --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="video-url">Video URL:</label>
+            <input type="text" id="video-url" readonly />
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button class="btn" id="fetch-btn" onclick="fetchThumbnail()" disabled>Fetch Thumbnail</button>
+            <button class="btn" id="insert-btn" onclick="insertThumbnail()" disabled>Insert Thumbnail</button>
+        </div>
+
+        <img id="thumbnail-preview" alt="Thumbnail Preview" />
+        
+        <div id="status-message" class="status"></div>
+    </div>
+
+    <!-- Include the auth sync utility so admin token can be loaded if present -->
+    <script src="auth-sync.js"></script>
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let currentVideos = [];
+        let fetchedThumbnailUrl = '';
+        let fetchedWatchUrl = '';
+
+        document.addEventListener('DOMContentLoaded', loadVideos);
+
+        async function loadVideos() {
+            try {
+                const response = await fetch(`${API_BASE}/videos`);
+                if (!response.ok) throw new Error('Failed to fetch videos');
+                currentVideos = await response.json();
+                
+                const select = document.getElementById('video-select');
+                select.innerHTML = '<option value="">-- Select a Video --</option>';
+                currentVideos.forEach(v => {
+                    const option = document.createElement('option');
+                    option.value = v.id;
+                    option.textContent = `[${v.category}] ${v.title} ${v.thumbnail_url ? '(Has Thumbnail)' : '(No Thumbnail)'}`;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                showStatus('Error loading videos: ' + err.message, 'error');
+            }
+        }
+
+        function onVideoSelect() {
+            const videoId = document.getElementById('video-select').value;
+            const urlInput = document.getElementById('video-url');
+            const fetchBtn = document.getElementById('fetch-btn');
+            const insertBtn = document.getElementById('insert-btn');
+            const preview = document.getElementById('thumbnail-preview');
+            
+            preview.style.display = 'none';
+            fetchedThumbnailUrl = '';
+            fetchedWatchUrl = '';
+            insertBtn.disabled = true;
+
+            if (!videoId) {
+                urlInput.value = '';
+                fetchBtn.disabled = true;
+                return;
+            }
+
+            const video = currentVideos.find(v => v.id === videoId);
+            if (video) {
+                urlInput.value = video.url;
+                fetchBtn.disabled = false;
+                
+                if (video.thumbnail_url) {
+                    preview.src = video.thumbnail_url;
+                    preview.style.display = 'block';
+                }
+            }
+        }
+
+        async function fetchThumbnail() {
+            const url = document.getElementById('video-url').value;
+            if (!url) return;
+
+            showStatus('Fetching YouTube details...', 'success');
+            const fetchBtn = document.getElementById('fetch-btn');
+            fetchBtn.disabled = true;
+
+            try {
+                // Determine ID or use the query
+                let endpoint = '';
+                const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([A-Za-z0-9_-]{11})/);
+                const searchMatch = url.match(/[?&]search_query=([^&]+)/);
+                
+                if (match) {
+                    endpoint = `${API_BASE}/youtube/video?video_id=${match[1]}`;
+                } else if (searchMatch) {
+                    endpoint = `${API_BASE}/youtube/video?query=${searchMatch[1]}`;
+                } else {
+                    endpoint = `${API_BASE}/youtube/video?query=${encodeURIComponent(url)}`;
+                }
+
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.detail || 'Failed to fetch details');
+                
+                if (!data.thumbnail) {
+                    throw new Error('No thumbnail available from API');
+                }
+
+                fetchedThumbnailUrl = data.thumbnail;
+                fetchedWatchUrl = data.watch_url;
+                
+                const preview = document.getElementById('thumbnail-preview');
+                preview.src = fetchedThumbnailUrl;
+                preview.style.display = 'block';
+                
+                document.getElementById('insert-btn').disabled = false;
+                showStatus('Thumbnail fetched successfully.', 'success');
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            } finally {
+                fetchBtn.disabled = false;
+            }
+        }
+
+        async function insertThumbnail() {
+            const videoId = document.getElementById('video-select').value;
+            if (!videoId || !fetchedThumbnailUrl) return;
+
+            const token = localStorage.getItem('ss_token');
+            if (!token) {
+                showStatus('Admin authentication required! Please login at the portal as admin first.', 'error');
+                return;
+            }
+
+            const insertBtn = document.getElementById('insert-btn');
+            insertBtn.disabled = true;
+            showStatus('Updating database...', 'success');
+
+            try {
+                const updatePayload = { thumbnail_url: fetchedThumbnailUrl };
+                if (fetchedWatchUrl) {
+                    updatePayload.url = fetchedWatchUrl;
+                }
+
+                const response = await fetch(`${API_BASE}/admin/videos/${videoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updatePayload)
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Failed to update video');
+                
+                showStatus('Thumbnail saved inside video table successfully.', 'success');
+                
+                // Refresh list
+                await loadVideos();
+                document.getElementById('video-select').value = videoId;
+            } catch (error) {
+                showStatus('Error updating DB: ' + error.message, 'error');
+                insertBtn.disabled = false;
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = 'status ' + type;
+            statusEl.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
