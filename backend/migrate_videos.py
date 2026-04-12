@@ -54,7 +54,7 @@ def migrate():
                 "youtube_id": "PkZNo7MFNFg",
                 "url": "https://www.youtube.com/watch?v=PkZNo7MFNFg",
                 "description": "Comprehensive JavaScript tutorial for beginners. Covers everything from basics to advanced concepts.",
-                "thumbnail_url": "https://img.youtube.com/vi/PkZNo7MFNFg/hqdefault.jpg"
+                "thumbnail_url": "https://i.ytimg.com/vi/PkZNo7MFNFg/hqdefault.jpg"
             },
             {
                 "title": "CSS Tutorial for Beginners - 6+ Hour Full Course",
@@ -64,7 +64,7 @@ def migrate():
                 "youtube_id": "OXGznpKZ_sA",
                 "url": "https://www.youtube.com/watch?v=OXGznpKZ_sA",
                 "description": "Complete CSS tutorial covering styling, layout, responsive design and modern CSS features.",
-                "thumbnail_url": "https://img.youtube.com/vi/OXGznpKZ_sA/hqdefault.jpg"
+                "thumbnail_url": "https://i.ytimg.com/vi/OXGznpKZ_sA/hqdefault.jpg"
             },
             {
                 "title": "MySQL Tutorial for Beginners [Full Course]",
@@ -74,7 +74,7 @@ def migrate():
                 "youtube_id": "7S_tz1z_5bA",
                 "url": "https://www.youtube.com/watch?v=7S_tz1z_5bA",
                 "description": "Full MySQL course for beginners. Learn database design, queries, and management.",
-                "thumbnail_url": "https://img.youtube.com/vi/7S_tz1z_5bA/hqdefault.jpg"
+                "thumbnail_url": "https://i.ytimg.com/vi/7S_tz1z_5bA/hqdefault.jpg"
             },
             {
                 "title": "19 Web Dev Projects – HTML, CSS, JavaScript Tutorial",
@@ -84,7 +84,37 @@ def migrate():
                 "youtube_id": "BiA08jfr4RU",
                 "url": "https://www.youtube.com/watch?v=BiA08jfr4RU",
                 "description": "Build 19 real-world web development projects using HTML, CSS, and JavaScript.",
-                "thumbnail_url": "https://img.youtube.com/vi/BiA08jfr4RU/hqdefault.jpg"
+                "thumbnail_url": "https://i.ytimg.com/vi/BiA08jfr4RU/hqdefault.jpg"
+            },
+            {
+                "title": "Java Tutorial for Beginners [2024]",
+                "category": "coding",
+                "language": "java",
+                "duration": "2:30:00",
+                "youtube_id": "A74ToWnie7s",
+                "url": "https://www.youtube.com/watch?v=A74ToWnie7s",
+                "description": "Learn Java programming in this full course for beginners.",
+                "thumbnail_url": "https://i.ytimg.com/vi/A74ToWnie7s/hqdefault.jpg"
+            },
+            {
+                "title": "PHP For Beginners - Full Course",
+                "category": "coding",
+                "language": "php",
+                "duration": "5:30:00",
+                "youtube_id": "OK_JCtrrv-c",
+                "url": "https://www.youtube.com/watch?v=OK_JCtrrv-c",
+                "description": "A comprehensive guide to learning PHP from scratch.",
+                "thumbnail_url": "https://i.ytimg.com/vi/OK_JCtrrv-c/hqdefault.jpg"
+            },
+            {
+                "title": "C++ Full Course for Beginners",
+                "category": "coding",
+                "language": "cpp",
+                "duration": "10:30:00",
+                "youtube_id": "vLnPwxZdW4Y",
+                "url": "https://www.youtube.com/watch?v=vLnPwxZdW4Y",
+                "description": "Master C++ programming with this extensive tutorial series.",
+                "thumbnail_url": "https://i.ytimg.com/vi/vLnPwxZdW4Y/hqdefault.jpg"
             }
         ]
 

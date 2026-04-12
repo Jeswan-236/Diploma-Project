@@ -300,6 +300,7 @@
         <p><i class="fas fa-laptop-code"></i> Practice-by-doing: watch, code, repeat.</p>
     </footer>
 
+    <script src="auth-sync.js"></script>
     <script>
         let allVideos = [];
         let completedVideos = new Set();
@@ -433,17 +434,35 @@
             try {
                 const youtubeVideoId = extractYouTubeVideoId(video.url);
                 let response;
+                const token = localStorage.getItem('ss_token');
+
+                // Clear previous transcript and show loading state
+                const transcriptEl = document.getElementById('transcript');
+                transcriptEl.textContent = 'Fetching transcript from database/YouTube... Please wait a moment.';
+                transcriptEl.style.color = '#a9b3ff';
+
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
 
                 if (youtubeVideoId) {
-                    response = await fetch(`http://127.0.0.1:8000/api/youtube/video?video_id=${encodeURIComponent(youtubeVideoId)}`);
+                    response = await fetch(`http://127.0.0.1:8000/api/youtube/video?video_id=${encodeURIComponent(youtubeVideoId)}`, { headers });
                 } else {
                     const searchQuery = extractYouTubeSearchQuery(video.url);
                     if (searchQuery) {
-                        response = await fetch(`http://127.0.0.1:8000/api/youtube/video?query=${encodeURIComponent(searchQuery)}`);
+                        response = await fetch(`http://127.0.0.1:8000/api/youtube/video?query=${encodeURIComponent(searchQuery)}`, { headers });
                     }
                 }
 
                 if (!response || !response.ok) {
+                    if (response && response.status === 401) {
+                        alert('Your session has expired. Please log in again.');
+                        window.location.href = 'portal.html';
+                        return;
+                    }
                     document.getElementById('detailTitle').textContent = video.title;
                     document.getElementById('videoFrame').src = '';
                     document.getElementById('channelTitle').textContent = 'N/A';
@@ -470,7 +489,14 @@
                 document.getElementById('likeCount').textContent = Number(data.like_count || 0).toLocaleString();
                 document.getElementById('publishedAt').textContent = data.published_at ? new Date(data.published_at).toLocaleDateString() : 'Unknown';
                 document.getElementById('description').textContent = data.description || 'No description available.';
-                document.getElementById('transcript').textContent = data.transcript?.available ? data.transcript.text : 'Transcript not available for this video.';
+                
+                if (data.transcript && data.transcript.available) {
+                    transcriptEl.textContent = data.transcript.text;
+                    transcriptEl.style.color = '#e6ecff';
+                } else {
+                    transcriptEl.textContent = data.transcript?.text || 'Transcript not available for this video.';
+                    transcriptEl.style.color = '#ff6b6b';
+                }
 
                 updateCompleteButton();
                 window.scrollTo({ top: 0, behavior: 'smooth' });

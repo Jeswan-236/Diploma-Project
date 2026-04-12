@@ -256,8 +256,22 @@
             statusEl.textContent = 'Loading video details...';
             detailSection.style.display = 'none';
             try {
-                const response = await fetch(`http://127.0.0.1:8000/api/youtube/video?video_id=${encodeURIComponent(videoId)}`);
+                const token = localStorage.getItem('ss_token');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(`http://127.0.0.1:8000/api/youtube/video?video_id=${encodeURIComponent(videoId)}`, { headers });
+                
                 if (!response.ok) {
+                    if (response && response.status === 401) {
+                        alert('Your session has expired. Please log in again.');
+                        window.location.href = 'portal.html';
+                        return;
+                    }
                     const error = await response.json();
                     statusEl.textContent = `Error: ${error.detail || response.statusText}`;
                     return;

@@ -7,9 +7,12 @@
 CREATE TABLE IF NOT EXISTS ai_video_table (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     video_id TEXT NOT NULL UNIQUE,
-    bucket_file_name TEXT NOT NULL,
+    bucket_file_name TEXT,
     bucket_file_url TEXT,
     chunk_count INTEGER DEFAULT 0,
+    transcript_raw TEXT,
+    summarized_segments JSONB,
+    master_knowledge_base TEXT,
     status TEXT DEFAULT 'pending',
     processed_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

@@ -17,6 +17,10 @@ import re
 import html
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled, VideoUnavailable
 import google.genai as genai
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Load env variables from .env in the same directory
 env_path = os.path.join(os.path.dirname(__file__), ".env")
@@ -85,7 +89,12 @@ def create_access_token(data: dict):
 # Dependency: Get current user from JWT token
 def get_current_user():
     auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
+    if not auth_header:
+        logger.warning("No Authorization header found")
+        return None
+        
+    if not auth_header.startswith('Bearer '):
+        logger.warning(f"Invalid Authorization header format: {auth_header[:20]}")
         return None
     
     token = auth_header.split(' ')[1]
@@ -94,12 +103,18 @@ def get_current_user():
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
+            logger.warning("Token payload missing 'sub' field")
             return None
-    except jwt.InvalidTokenError:
+    except jwt.ExpiredSignatureError:
+        logger.warning("Token has expired")
+        return None
+    except jwt.InvalidTokenError as e:
+        logger.warning(f"Invalid token: {e}")
         return None
     
     response = supabase.table("users").select("*").eq("username", username).execute()
     if not response.data:
+        logger.warning(f"User not found for username: {username}")
         return None
     
     return response.data[0]
@@ -110,6 +125,7 @@ def require_auth(f):
     def decorated_function(*args, **kwargs):
         user = get_current_user()
         if not user:
+            logger.info(f"Unauthorized access attempt to {request.path}")
             return jsonify({"detail": "Could not validate credentials"}), 401
         return f(user, *args, **kwargs)
     return decorated_function
@@ -473,14 +489,22 @@ def _urlopen_with_browser_headers(url):
 
 
 def _parse_yt_initial_player_response(html_text):
-    match = re.search(r"ytInitialPlayerResponse\s*=\s*(\{.+?\})\s*;", html_text, re.DOTALL)
-    if not match:
-        return None
-
-    try:
-        return json.loads(match.group(1))
-    except json.JSONDecodeError:
-        return None
+    # Try multiple common patterns for ytInitialPlayerResponse
+    patterns = [
+        r"ytInitialPlayerResponse\s*=\s*(\{.+?\})\s*;",
+        r"ytInitialPlayerResponse\s*=\s*(\{.+?\})\s*</script>",
+        r"window\[['\"]ytInitialPlayerResponse['\"]\]\s*=\s*(\{.+?\})\s*;"
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, html_text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(1))
+            except json.JSONDecodeError:
+                continue
+    
+    return None
 
 
 def _fetch_caption_tracks_from_watch_page(video_id):
@@ -536,41 +560,53 @@ def fetch_transcript(video_id, lang="en"):
     Handles various library version differences and YouTube IP blocking issues.
     """
     try:
-        # Instantiate the API client
         from youtube_transcript_api import YouTubeTranscriptApi
         api = YouTubeTranscriptApi()
         
         transcript_data = None
         try:
-            print(f"Transcript Fetch: Trying primary API for {video_id} (lang: {lang})")
-            # 1. Try to fetch the transcript in the requested language
-            transcript_obj = api.fetch(video_id, languages=[lang])
-            transcript_data = transcript_obj.to_raw_data()
-        except Exception as e:
-            print(f"Transcript Fetch: Primary language '{lang}' failed: {e}")
-            # 2. If requested language fails, try to list all and pick the best one
+            print(f"Transcript Fetch: Trying YouTubeTranscriptApi for {video_id} (lang: {lang})")
+            # 1. Try to list transcripts to pick the best one
+            transcript_list = api.list(video_id)
+            
             try:
-                print(f"Transcript Fetch: Listing all available transcripts for {video_id}...")
-                transcript_list = api.list(video_id)
-                # Try finding specified language
+                # Try finding manual transcript in requested lang
+                transcript_obj = transcript_list.find_transcript([lang])
+            except Exception:
                 try:
-                    transcript_data = transcript_list.find_transcript([lang]).fetch().to_raw_data()
+                    # Fallback to English manual
+                    transcript_obj = transcript_list.find_transcript(['en'])
                 except Exception:
                     try:
-                        # Fallback to generated
-                        transcript_data = transcript_list.find_generated_transcript([lang]).fetch().to_raw_data()
+                        # Fallback to English manual (US)
+                        transcript_obj = transcript_list.find_transcript(['en-US'])
                     except Exception:
-                        # Final fallback: pick the first available
-                        transcript_data = next(iter(transcript_list)).fetch().to_raw_data()
-            except Exception as e_list:
-                print(f"Transcript Fetch: API listing failed: {e_list}")
+                        try:
+                            # Fallback to auto-generated in requested lang
+                            transcript_obj = transcript_list.find_generated_transcript([lang])
+                        except Exception:
+                            try:
+                                # Fallback to auto-generated in English
+                                transcript_obj = transcript_list.find_generated_transcript(['en'])
+                            except Exception:
+                                # Fallback to auto-generated in English (US)
+                                transcript_obj = transcript_list.find_generated_transcript(['en-US'])
+            
+            transcript_data = transcript_obj.fetch()
+        except Exception as e:
+            print(f"Transcript Fetch: YouTubeTranscriptApi listing/fetch failed for {video_id}: {e}")
+            # Quick fallback: direct fetch if allowed
+            try:
+                # Some old versions allow direct .fetch() on the api object
+                transcript_data = api.fetch(video_id, languages=[lang, 'en', 'en-US'])
+            except Exception as e2:
+                print(f"Transcript Fetch: Direct api.fetch failed: {e2}")
                 transcript_data = None
 
         if transcript_data:
             items = []
             full_text = []
             for item in transcript_data:
-                # In to_raw_data(), it's a list of dictionaries
                 start = float(item.get("start", 0))
                 duration = float(item.get("duration", 0))
                 text = item.get("text", "")
@@ -582,10 +618,9 @@ def fetch_transcript(video_id, lang="en"):
                 })
                 full_text.append(text)
             
-            return {"available": True, "items": items, "text": "\n".join(full_text)}
+            return {"available": True, "status": "found", "items": items, "text": "\n".join(full_text)}
 
     except Exception as e:
-        # This catches RequestBlocked (IP bans) and other library-specific exceptions
         print(f"YouTube Transcript API CRITICAL ERROR for {video_id}: {e}")
 
     # --- FALLBACK 1: XML TimedText API ---
@@ -604,13 +639,69 @@ def fetch_transcript(video_id, lang="en"):
     print(f"Transcript Fetch: Attempting Fallback 2 (Watch Page Scraping) for {video_id}")
     try:
         tracks = _fetch_caption_tracks_from_watch_page(video_id)
+        if not tracks:
+             print(f"Transcript Fetch: No caption tracks found on watch page for {video_id}")
         track = _choose_best_caption_track(tracks, lang=lang)
         if track and track.get("baseUrl"):
             xml_text = _urlopen_with_browser_headers(track["baseUrl"])
             if xml_text and "<transcript" in xml_text:
                 return _parse_xml_transcript(xml_text)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Transcript Fetch: Fallback 2 failed: {e}")
+
+    # --- FALLBACK 3: yt-dlp extracting automatic/manual captions ---
+    print(f"Transcript Fetch: Attempting Fallback 3 (yt-dlp) for {video_id}")
+    try:
+        import yt_dlp
+        ydl_opts = {
+            'skip_download': True,
+            'writesubtitles': True,
+            'writeautomaticsub': True,
+            'subtitleslangs': [lang, 'en'],
+            'quiet': True,
+            'no_warnings': True
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+            
+            subs = info.get('subtitles', {}) or {}
+            auto_subs = info.get('automatic_captions', {}) or {}
+            
+            target_sub = None
+            if lang in subs:
+                target_sub = subs[lang]
+            elif 'en' in subs:
+                target_sub = subs['en']
+            elif lang in auto_subs:
+                target_sub = auto_subs[lang]
+            elif 'en' in auto_subs:
+                target_sub = auto_subs['en']
+            
+            if target_sub:
+                # Find the json3 format if available (easiest to parse)
+                json3_sub = next((s for s in target_sub if s.get('ext') == 'json3'), None)
+                if json3_sub and json3_sub.get('url'):
+                    sub_url = json3_sub['url']
+                    sub_response = _urlopen_with_browser_headers(sub_url)
+                    import json
+                    if sub_response:
+                        sub_data = json.loads(sub_response)
+                        items = []
+                        full_text = []
+                        if 'events' in sub_data:
+                            for event in sub_data['events']:
+                                if 'segs' in event:
+                                    text = ''.join([seg.get('utf8', '') for seg in event['segs']]).replace('\n', ' ').strip()
+                                    start = event.get('tStartMs', 0) / 1000.0
+                                    duration = event.get('dDurationMs', 0) / 1000.0
+                                    if text:
+                                        items.append({"start": start, "duration": duration, "text": text})
+                                        full_text.append(text)
+                        
+                        if full_text:
+                            return {"available": True, "items": items, "text": "\n".join(full_text)}
+    except Exception as e:
+        print(f"Transcript Fetch: Fallback 3 (yt-dlp) failed: {e}")
 
     return None
 
@@ -643,10 +734,12 @@ def fetch_youtube_video_details(video_id):
     )
 
     try:
+        logger.info(f"Calling YouTube API (videos endpoint) for video: {video_id} using YOUTUBE_API_KEY")
         with urllib.request.urlopen(api_url, timeout=10) as response:
             payload = json.loads(response.read().decode("utf-8"))
+        logger.info(f"YouTube API call successful for video: {video_id}")
     except Exception as e:
-        print(f"Error fetching video details for {video_id}: {e}")
+        logger.error(f"Error fetching video details for {video_id} via YouTube API: {e}")
         return None
 
     items = payload.get("items", [])
@@ -658,7 +751,7 @@ def fetch_youtube_video_details(video_id):
     stats = video.get("statistics", {})
     content_details = video.get("contentDetails", {})
 
-    return {
+    final_details = {
         "video_id": video_id,
         "title": snippet.get("title", ""),
         "description": snippet.get("description", ""),
@@ -672,6 +765,9 @@ def fetch_youtube_video_details(video_id):
         "watch_url": f"https://www.youtube.com/watch?v={video_id}",
         "embed_url": f"https://www.youtube.com/embed/{video_id}",
     }
+    
+    logger.info(f"Video Data Loaded successfully for {video_id}. Title: '{final_details['title']}', Views: {final_details['view_count']}")
+    return final_details
 
 
 def search_youtube_video(query):
@@ -691,9 +787,12 @@ def search_youtube_video(query):
     )
 
     try:
+        logger.info(f"Calling YouTube API (search endpoint) for query: '{query}' using YOUTUBE_API_KEY")
         with urllib.request.urlopen(search_url, timeout=10) as response:
             payload = json.loads(response.read().decode("utf-8"))
-    except Exception:
+        logger.info(f"YouTube search API call successful for query: '{query}'")
+    except Exception as e:
+        logger.error(f"Error executing YouTube search API for query '{query}': {e}")
         return None
 
     items = payload.get("items", [])
@@ -706,7 +805,7 @@ def search_youtube_video(query):
 
 def process_video_content(video_id):
     # Check if already processed
-    response = supabase.table("ai_video_content").select("*").eq("video_id", video_id).execute()
+    response = supabase.table("ai_video_table").select("*").eq("video_id", video_id).execute()
     if response.data:
         return {"message": "Video already processed", "video_id": video_id}
 
@@ -753,13 +852,16 @@ def process_video_content(video_id):
         "summarized_segments": summarized_segments,
         "master_knowledge_base": master_knowledge_base
     }
-    supabase.table("ai_video_content").insert(data).execute()
+    supabase.table("ai_video_table").upsert(data).execute()
 
     return {"message": "Video processed successfully", "video_id": video_id}
 
 
 @app.route('/api/youtube/video', methods=['GET'])
-def get_youtube_video_details():
+@require_auth
+def get_youtube_video_details(current_user):
+    # Attempt to get user from token if needed, though not strictly required for this endpoint yet
+    # but @require_auth ensures we have a valid session.
     video_id = request.args.get("video_id", "").strip()
     query = request.args.get("query", "").strip()
 
@@ -775,27 +877,50 @@ def get_youtube_video_details():
     if not details:
         return jsonify({"detail": "Video details not found or API request failed"}), 404
 
-    # --- DATABASE-FIRST LOOKUP ---
-    print(f"Checking database for existing transcript: {video_id}")
+    # --- DATABASE-FIRST LOOKUP & AUTO-CACHE ---
+    print(f"DEBUG: Checking database for existing transcript: {video_id}")
+    transcript = None
     try:
-        db_res = supabase.table("ai_video_content").select("transcript_raw").eq("video_id", video_id).execute()
-        if db_res.data and len(db_res.data) > 0:
-            print(f"Found existing transcript in database for {video_id}")
+        # We use consistent lookups in ai_video_table which we just verified exists.
+        db_res = supabase.table("ai_video_table").select("transcript_raw").eq("video_id", video_id).execute()
+        if db_res.data and len(db_res.data) > 0 and db_res.data[0].get('transcript_raw'):
+            print(f"DEBUG: Found existing transcript in database for {video_id}")
             transcript = {
                 "available": True,
-                "items": [], # We don't store segments currently, but this fulfills the interface
-                "text": db_res.data[0].get("transcript_raw", ""),
+                "items": [], 
+                "text": db_res.data[0]['transcript_raw'],
                 "source": "database"
             }
-        else:
-            print(f"No existing transcript in database for {video_id}. Fetching from YouTube.")
-            transcript = fetch_transcript(video_id)
     except Exception as e:
-        print(f"Database lookup error specifically for transcript: {e}")
-        transcript = fetch_transcript(video_id)
+        print(f"DEBUG: Database transcript lookup error for {video_id}: {e}")
 
-    if transcript is None:
-        transcript = {"available": False, "items": [], "text": "Transcript not available for this video."}
+    # --- FETCH FROM YOUTUBE IF NOT IN DB ---
+    if not transcript:
+        print(f"DEBUG: No valid transcript in DB for {video_id}. Fetching from YouTube.")
+        transcript = fetch_transcript(video_id)
+        
+        # AUTO-CACHE: Save successfully fetched transcripts
+        if transcript and transcript.get("available") and transcript.get("text"):
+            try:
+                print(f"DEBUG: Auto-caching transcript for {video_id}...")
+                cache_data = {
+                    "video_id": video_id,
+                    "transcript_raw": transcript["text"],
+                    "master_knowledge_base": f"Transcript cached on {datetime.now().isoformat()}"
+                }
+                # Use upsert to prevent unique constraint violations
+                supabase.table("ai_video_table").upsert(cache_data).execute()
+            except Exception as e_cache:
+                print(f"DEBUG: Auto-cache failed for {video_id}: {e_cache}")
+
+    # Final fallback if both fail
+    if not transcript:
+        transcript = {
+            "available": False, 
+            "status": "missing",
+            "items": [], 
+            "text": "Transcript not available for this video."
+        }
 
     details["transcript"] = transcript
     return jsonify(details), 200

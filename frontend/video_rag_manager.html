@@ -544,6 +544,11 @@
             document.getElementById('watchLink').href = video.url;
             document.getElementById('videoCategory').textContent = (video.category || 'N/A').toUpperCase();
 
+            // Clear previous transcript and show loading state
+            const transcriptEl = document.getElementById('transcript');
+            transcriptEl.textContent = 'Fetching transcript from database/YouTube... Please wait a moment.';
+            transcriptEl.style.color = '#a9b3ff';
+
             // Reset AI Learn button
             resetAiLearnButton();
 
@@ -551,16 +556,29 @@
                 const youtubeVideoId = extractYouTubeVideoId(video.url);
                 let response;
 
+                const token = localStorage.getItem('ss_token');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
                 if (youtubeVideoId) {
-                    response = await fetch(`${API_BASE}/api/youtube/video?video_id=${encodeURIComponent(youtubeVideoId)}`);
+                    response = await fetch(`${API_BASE}/api/youtube/video?video_id=${encodeURIComponent(youtubeVideoId)}`, { headers });
                 } else {
                     const searchQuery = extractYouTubeSearchQuery(video.url);
                     if (searchQuery) {
-                        response = await fetch(`${API_BASE}/api/youtube/video?query=${encodeURIComponent(searchQuery)}`);
+                        response = await fetch(`${API_BASE}/api/youtube/video?query=${encodeURIComponent(searchQuery)}`, { headers });
                     }
                 }
 
                 if (!response || !response.ok) {
+                    if (response && response.status === 401) {
+                        alert('Your session has expired. Please log in again.');
+                        window.location.href = 'portal.html';
+                        return;
+                    }
                     document.getElementById('detailTitle').textContent = video.title;
                     document.getElementById('videoFrame').src = '';
                     document.getElementById('channelTitle').textContent = 'N/A';
@@ -570,6 +588,7 @@
                     document.getElementById('publishedAt').textContent = 'Unknown';
                     document.getElementById('description').textContent = video.description || 'No description available.';
                     document.getElementById('transcript').textContent = 'This video URL is not a direct YouTube watch link, so metadata cannot be loaded automatically. Click Open on YouTube to view it.';
+
 
                     updateCompleteButton();
                     window.scrollTo({ top: 0, behavior: 'smooth' });

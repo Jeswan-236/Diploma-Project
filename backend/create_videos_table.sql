@@ -13,11 +13,11 @@ CREATE TABLE IF NOT EXISTS videos (
 
 -- Insert sample data from the frontend
 INSERT INTO videos (title, description, url, keywords, category) VALUES
-('HTML Video Class', 'Tags, structure, forms and semantic HTML.', 'https://www.youtube.com/results?search_query=html+crash+course', 'html,tags,structure,forms,semantic', 'coding'),
-('CSS Video Class', 'Selectors, box model, Flexbox & Grid.', 'https://www.youtube.com/results?search_query=css+fundamentals+flexbox+grid', 'css,selectors,box model,flexbox,grid', 'coding'),
-('JavaScript Video Class', 'JS basics, DOM, events and async.', 'https://www.youtube.com/results?search_query=javascript+basics+dom+events', 'javascript,dom,events,async', 'coding'),
-('Python Video Class', 'Python fundamentals, data structures and examples.', 'https://www.youtube.com/results?search_query=python+for+beginners+full+course', 'python,fundamentals,data structures', 'coding'),
-('MySQL Video Class', 'MySQL fundamentals, Schema, CRUD.', 'https://www.youtube.com/results?search_query=mysql+fundamentals+schema+crud', 'mysql,schema,crud', 'coding'),
+('HTML Video Class', 'Tags, structure, forms and semantic HTML.', 'https://www.youtube.com/watch?v=kUMe1FH4CGY', 'html,tags,structure,forms,semantic', 'coding'),
+('CSS Video Class', 'Selectors, box model, Flexbox & Grid.', 'https://www.youtube.com/watch?v=OXGznpKZ_sA', 'css,selectors,box model,flexbox,grid', 'coding'),
+('JavaScript Video Class', 'JS basics, DOM, events and async.', 'https://www.youtube.com/watch?v=W6NZfCO5SIk', 'javascript,dom,events,async', 'coding'),
+('Python Video Class', 'Python fundamentals, data structures and examples.', 'https://www.youtube.com/watch?v=_uQrJ0TkZlc', 'python,fundamentals,data structures', 'coding'),
+('MySQL Video Class', 'MySQL fundamentals, Schema, CRUD.', 'https://www.youtube.com/watch?v=7S_tz1z_5bA', 'mysql,schema,crud', 'coding'),
 ('Algebra Basics', 'Foundational algebra lessons.', 'https://youtu.be/gOK4p5bBmcQ?si=QdwDgueNrYEDizXo', 'algebra,quadratic,linear,polynomials,matrix,matrices', 'maths'),
 ('Geometry Concepts', 'Shapes, theorems, and practice.', 'https://youtu.be/DsAuX8ExDZc?si=uQvP28n6ixK_-viA', 'geometry,triangles,circles,theorems', 'maths'),
 ('Calculus Intro', 'Limits, derivatives, integrals.', 'https://youtu.be/UukVP7Mg3TU?si=JAYkUwnw5I2H633a', 'calculus,limits,derivatives,integrals', 'maths'),
@@ -33,17 +33,23 @@ ON CONFLICT DO NOTHING;
 -- Backfill missing YouTube thumbnails from the video URL
 UPDATE videos
 SET thumbnail_url = CASE
-    WHEN url ILIKE '%youtu.be/%' THEN concat('https://img.youtube.com/vi/', substring(url FROM 'youtu\.be/([^?&/]+)'), '/hqdefault.jpg')
-    WHEN url ILIKE '%youtube.com/%' THEN concat('https://img.youtube.com/vi/', substring(url FROM 'v=([^&]+)'), '/hqdefault.jpg')
+    WHEN url ILIKE '%youtu.be/%' AND substring(url FROM 'youtu\.be/([^?&/]+)') IS NOT NULL THEN concat('https://img.youtube.com/vi/', substring(url FROM 'youtu\.be/([^?&/]+)'), '/hqdefault.jpg')
+    WHEN url ILIKE '%youtube.com/watch%' AND substring(url FROM 'v=([^&]+)') IS NOT NULL THEN concat('https://img.youtube.com/vi/', substring(url FROM 'v=([^&]+)'), '/hqdefault.jpg')
     ELSE thumbnail_url
 END
 WHERE thumbnail_url IS NULL
-  AND (url ILIKE '%youtu.be/%' OR url ILIKE '%youtube.com/%');
+  AND (url ILIKE '%youtu.be/%' OR url ILIKE '%youtube.com/watch%');
 
--- Create the ai_video_content table for AI learning feature
+-- Create the ai_video_content table for AI learning and RAG processing
 CREATE TABLE IF NOT EXISTS ai_video_content (
     video_id TEXT PRIMARY KEY,
     transcript_raw TEXT,
     summarized_segments JSONB,
-    master_knowledge_base TEXT
+    master_knowledge_base TEXT,
+    bucket_file_name TEXT,
+    bucket_file_url TEXT,
+    chunk_count INTEGER,
+    status TEXT DEFAULT 'pending',
+    processed_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
