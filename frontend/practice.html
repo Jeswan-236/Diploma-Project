@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Practice Lab · skill stalker</title>
+    <title>Practice Lab · skill stalker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700,800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="demo2.css?v=4">
     <script src="auth-sync.js"></script>
@@ -17,44 +19,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
-    <style>
-        /* Rich Dark Theme for CodeEditor */
-        .CodeMirror {
-            background: #131836 !important;
-            color: #d1d9ff !important;
-            border: 1px solid rgba(130, 160, 255, 0.2) !important;
-            border-radius: 10px;
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
-            height: 360px !important;
-        }
-        .CodeMirror-gutters {
-            background-color: #0c1024 !important;
-            border-right: 1px solid rgba(130, 160, 255, 0.1) !important;
-        }
-        .CodeMirror-cursor {
-            border-left: 2px solid #5a8cff !important;
-        }
-    </style>
 </head>
+
 <body>
     <header>
         <nav class="navbar">
-<div class="logo"><i class="fas fa-code-branch"></i> skill stalker</div>
+            <div class="logo"><i class="fas fa-code-branch"></i> skill stalker</div>
             <div class="nav-links">
                 <a href="demo.html"><i class="fas fa-arrow-left"></i> back</a>
             </div>
         </nav>
     </header>
 
-    <main style="padding:2rem;">
-        <section class="section">
+    <main class="practice-shell">
+        <section class="section practice-hero">
             <h2 class="section-title"><i class="fas fa-laptop-code"></i> Practice Lab</h2>
-            <p style="color:#bdc9ff;">Pick a language, generate a practice prompt, implement it locally, then mark the practice as complete to increase your streak.</p>
+            <p class="practice-copy">Pick a language, generate a practice prompt, implement it locally, then mark the
+                practice as complete to increase your streak.</p>
 
-            <div style="display:flex;gap:0.6rem;align-items:center;margin-top:0.8rem;">
-                <select id="practiceLang" style="padding:0.6rem;border-radius:6px;background:#0d1024;color:#e6ecff;border:1px solid rgba(150,160,255,0.08);">
+            <div class="practice-toolbar">
+                <select id="practiceLang" class="practice-select">
                     <option value="HTML">HTML</option>
                     <option value="CSS">CSS</option>
                     <option value="JS">JavaScript</option>
@@ -63,38 +47,40 @@
                 <button id="genBtn" class="glow-btn">Generate Prompt</button>
             </div>
 
-            <div style="margin-top:1rem; display:grid; grid-template-columns: 1fr 560px; gap:1rem; align-items:start;">
-                <div id="promptCard" style="display:none; background:#0f1330; padding:1.6rem; border-radius:10px; min-height:420px; position:relative;">
-                    <div style="color:#9fb0ff;font-weight:700;margin-bottom:0.6rem;">Level 1</div>
-                    <h3 id="promptTitle" style="margin:0 0 0.6rem 0;color:#e6ecff; font-size:1.6rem;"></h3>
-                    <p id="promptText" style="color:#bdc9ff;margin:0 0 1.2rem 0; line-height:1.6;"></p>
-                    <div id="feedback" style="display:none;margin-top:0.6rem;padding:0.8rem;border-radius:6px;background:#081028;color:#f0f6ff;">
+            <div class="practice-layout">
+                <div id="promptCard" class="panel-card prompt-card">
+                    <div class="prompt-level"><i class="fas fa-star"></i> Level 1</div>
+                    <h3 id="promptTitle" class="prompt-title"></h3>
+                    <p id="promptText" class="prompt-text"></p>
+                    <div id="feedback" class="feedback-box">
                     </div>
                     <div style="position:absolute; visibility:hidden; height:0; width:0; overflow:hidden;"></div>
                 </div>
 
-                <div id="editorPane" style="display:flex;flex-direction:column;gap:0.8rem;">
-                    <textarea id="practiceAnswer" placeholder="# Write your code here..." style="width:100%;min-height:360px;background:#0b0e1f;color:#e6ecff;padding:0.8rem;border-radius:10px;border:1px solid rgba(255,255,255,0.03);"></textarea>
-
-                    <button id="runCodeBtn" class="glow-btn" style="height:56px; font-size:1.05rem; display:flex;align-items:center;justify-content:center;">Run Code <span style="margin-left:0.6rem;">▶</span></button>
-
-                    <div style="display:flex;gap:0.6rem;align-items:center;">
-                        <button id="submitPractice" class="glow-btn" style="height:44px;padding:0 0.9rem;">Submit Practice</button>
-                        <button id="skipPractice" class="cancel-btn" style="height:44px;padding:0 0.9rem;">Skip</button>
+                <div id="editorPane" class="panel-card editor-pane">
+                    <div class="editor-wrapper">
+                        <textarea id="practiceAnswer" placeholder="# Write your code here..."></textarea>
                     </div>
 
-                    <div id="consoleOutput" style="background:#000;border-radius:8px;padding:0.8rem;min-height:72px;color:#33ff66;font-family:monospace;box-shadow:inset 0 0 0 2px rgba(255,255,255,0.02);">Ready to run...</div>
+                    <button id="runCodeBtn" class="glow-btn run-btn">Run Code <span>▶</span></button>
+
+                    <div class="action-row">
+                        <button id="submitPractice" class="glow-btn">Submit Practice</button>
+                        <button id="skipPractice" class="cancel-btn">Skip</button>
+                    </div>
+
+                    <div id="consoleOutput" class="console-box">Ready to run...</div>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer style="padding:1rem;text-align:center;color:#9fb0ff;">
+    <footer class="practice-footer">
         <p><i class="fas fa-heart"></i> Practice builds skill — one step at a time.</p>
     </footer>
 
     <script>
-        (function(){
+        (function () {
             const genBtn = document.getElementById('genBtn');
             const lang = document.getElementById('practiceLang');
             const promptCard = document.getElementById('promptCard');
@@ -128,10 +114,10 @@
                 `;
                 toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="font-size: 1.4rem;"></i> <span style="line-height:1.4;">${message}</span>`;
                 document.body.appendChild(toast);
-                
+
                 // Trigger pop animation
                 setTimeout(() => toast.style.transform = 'translateX(0)', 10);
-                
+
                 // Remove smoothly
                 setTimeout(() => {
                     toast.style.transform = 'translateX(120%)';
@@ -141,26 +127,58 @@
 
             const templates = {
                 'HTML': [
-                    {title:'Simple Contact Form', text:'Create a simple HTML contact form with fields: name, email, message and a submit button.'},
-                    {title:'Semantic Article', text:'Build an article structure using semantic elements: header, article, section, footer.'}
+                    { title: 'Simple Contact Form', text: 'Create a simple HTML contact form with fields: name, email, message and a submit button.' },
+                    { title: 'Semantic Article', text: 'Build an article structure using semantic elements: header, article, section, footer.' }
                 ],
                 'CSS': [
-                    {title:'Styled Button', text:'Write CSS to create a rounded gradient button with hover effect.'},
-                    {title:'Responsive Card', text:'Create a responsive card with shadow, image on top and text below.'}
+                    { title: 'Styled Button', text: 'Write CSS to create a rounded gradient button with hover effect.' },
+                    { title: 'Responsive Card', text: 'Create a responsive card with shadow, image on top and text below.' }
                 ],
                 'JS': [
-                    {title:'Reverse String', text:'Write a JavaScript function that reverses a string input.'},
-                    {title:'DOM Todo', text:'Create a small todo list: add items, remove items, and mark as done using vanilla JS.'}
+                    { title: 'Reverse String', text: 'Write a JavaScript function that reverses a string input.' },
+                    { title: 'DOM Todo', text: 'Create a small todo list: add items, remove items, and mark as done using vanilla JS.' }
                 ],
                 'Python': [
-                    {title:'Factorial Function', text:'Write a Python function that returns the factorial of a non-negative integer.'},
-                    {title:'List Sum', text:'Write a function that returns the sum of numbers in a list without using built-in sum.'}
+                    { title: 'Factorial Function', text: 'Write a Python function that returns the factorial of a non-negative integer.' },
+                    { title: 'List Sum', text: 'Write a function that returns the sum of numbers in a list without using built-in sum.' }
                 ]
+            };
+
+            const demoSnippets = {
+                'HTML': `<form>
+    <input name="name" placeholder="Name">
+    <input type="email" name="email" placeholder="Email">
+    <textarea name="message" placeholder="Message"></textarea>
+    <button type="submit">Send</button>
+</form>`,
+                'CSS': `.action-btn {
+    background: linear-gradient(135deg, #4f7cff, #29c9ff);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 20px;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}`,
+                'JS': `function reverseString(s) {
+    return s.split('').reverse().join('');
+}
+
+console.log(reverseString('skill stalker'));`,
+                'Python': `def list_sum(nums):
+        total = 0
+        for n in nums:
+                total += n
+        return total
+
+print(list_sum([2, 4, 6]))`
             };
 
             // Initialize CodeMirror editor on the textarea
             let editor = null;
-            try{
+            try {
                 editor = CodeMirror.fromTextArea(answer, {
                     lineNumbers: true,
                     mode: langToMode(lang.value),
@@ -168,71 +186,62 @@
                     viewportMargin: Infinity
                 });
                 window.practiceEditor = editor;
-            }catch(e){ console.warn('CodeMirror init failed', e); editor = null; }
+            } catch (e) { console.warn('CodeMirror init failed', e); editor = null; }
 
-            function langToMode(l){
-                if(l === 'HTML') return 'htmlmixed';
-                if(l === 'CSS') return 'css';
-                if(l === 'JS') return 'javascript';
-                if(l === 'Python') return 'python';
+            function langToMode(l) {
+                if (l === 'HTML') return 'htmlmixed';
+                if (l === 'CSS') return 'css';
+                if (l === 'JS') return 'javascript';
+                if (l === 'Python') return 'python';
                 return 'javascript';
             }
 
             // update editor mode when language changes
-            lang.addEventListener('change', ()=>{
+            lang.addEventListener('change', () => {
                 const m = langToMode(lang.value);
-                if(editor) editor.setOption('mode', m);
+                if (editor) editor.setOption('mode', m);
             });
 
             // Run Code button and console
             const runBtn = document.getElementById('runCodeBtn');
             const consoleOutput = document.getElementById('consoleOutput');
-            function writeConsole(msg){
-                if(!consoleOutput) return;
-                if(consoleOutput.innerText === 'Ready to run...') consoleOutput.innerText = '';
+            function writeConsole(msg) {
+                if (!consoleOutput) return;
+                if (consoleOutput.innerText === 'Ready to run...') consoleOutput.innerText = '';
                 consoleOutput.innerText += msg + '\n';
             }
-            function clearConsole(){ if(consoleOutput) consoleOutput.innerText = ''; }
+            function clearConsole() { if (consoleOutput) consoleOutput.innerText = ''; }
 
-            if(runBtn){
-                runBtn.addEventListener('click', ()=>{
+            if (runBtn) {
+                runBtn.addEventListener('click', () => {
                     clearConsole();
                     const code = (window.practiceEditor ? window.practiceEditor.getValue() : (answer.value || ''));
-                    if(!code.trim()){ writeConsole('No code to run.'); return; }
+                    if (!code.trim()) { writeConsole('No code to run.'); return; }
 
                     const selectedLang = (lang && lang.value) ? lang.value : 'JS';
-                    if(selectedLang === 'JS'){
+                    if (selectedLang === 'JS') {
                         const logs = [];
                         const origConsoleLog = console.log;
-                        console.log = function(...args){ logs.push(args.map(a=>String(a)).join(' ')); origConsoleLog.apply(console, args); };
-                        try{
+                        console.log = function (...args) { logs.push(args.map(a => String(a)).join(' ')); origConsoleLog.apply(console, args); };
+                        try {
                             const fn = new Function(code);
                             const res = fn();
-                            if(res !== undefined) logs.push(String(res));
-                        }catch(e){ logs.push('Runtime Error: ' + (e && e.message ? e.message : String(e))); }
+                            if (res !== undefined) logs.push(String(res));
+                        } catch (e) { logs.push('Runtime Error: ' + (e && e.message ? e.message : String(e))); }
                         console.log = origConsoleLog;
-                        if(logs.length === 0) writeConsole('Program ran (no output).');
+                        if (logs.length === 0) writeConsole('Program ran (no output).');
                         logs.forEach(l => writeConsole(l));
-                    } else if(selectedLang === 'HTML'){
-                        try{
+                    } else if (selectedLang === 'HTML') {
+                        try {
                             const w = window.open();
                             w.document.open();
                             w.document.write(code);
                             w.document.close();
                             writeConsole('Opened HTML preview in a new window/tab.');
-                        }catch(e){ writeConsole('Could not open preview: '+e.message); }
-                    } else if(selectedLang === 'Python'){
-                        Sk.configure({
-                            output: function(text) { writeConsole(text); },
-                            read: function(x) {
-                                if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
-                                    throw "File not found: '" + x + "'";
-                                return Sk.builtinFiles["files"][x];
-                            }
-                        });
-                        const promise = Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
-                        promise.then(() => {}, (err) => writeConsole(err.toString()));
-                    } else if(selectedLang === 'CSS'){
+                        } catch (e) { writeConsole('Could not open preview: ' + e.message); }
+                    } else if (selectedLang === 'Python') {
+                        writeConsole('Python execution is not enabled in this static build. Consider adding Pyodide to run Python in-browser.');
+                    } else if (selectedLang === 'CSS') {
                         writeConsole('CSS snippet saved — apply it inside an HTML file or use a live preview.');
                     } else {
                         writeConsole('Language not supported for run.');
@@ -240,20 +249,64 @@
                 });
             }
 
-            function getPrompt(language){
+            function getPrompt(language) {
                 const list = templates[language] || [];
-                return list[Math.floor(Math.random()*list.length)];
+                return list[Math.floor(Math.random() * list.length)];
             }
 
-            function getCalendarTopicForToday(){
-                try{
-                    const saved = JSON.parse(localStorage.getItem('calendarTopics')||'{}');
+            function seedDummyData() {
+                try {
+                    const existingLogs = JSON.parse(localStorage.getItem('practiceLogs') || '[]');
+                    if (!Array.isArray(existingLogs) || existingLogs.length === 0) {
+                        const seedLogs = [
+                            { date: '2026-04-10T09:15:00.000Z', lang: 'HTML', prompt: 'Simple Contact Form', answer: '<form>...</form>', result: true },
+                            { date: '2026-04-11T10:20:00.000Z', lang: 'CSS', prompt: 'Styled Button', answer: '.btn{border-radius:999px;}', result: true },
+                            { date: '2026-04-12T11:35:00.000Z', lang: 'JS', prompt: 'Reverse String', answer: 'function reverseString(s){...}', result: false }
+                        ];
+                        localStorage.setItem('practiceLogs', JSON.stringify(seedLogs));
+                    }
+
+                    const existingStreak = JSON.parse(localStorage.getItem('streakDays') || '{}');
+                    if (!existingStreak || Object.keys(existingStreak).length === 0) {
+                        localStorage.setItem('streakDays', JSON.stringify({ 1: 'completed', 2: 'completed', 3: 'completed', 4: 'in-progress' }));
+                    }
+
+                    const existingCalendar = JSON.parse(localStorage.getItem('calendarTopics') || '{}');
+                    if (!existingCalendar || Object.keys(existingCalendar).length === 0) {
+                        const today = new Date();
+                        const key = `${today.getMonth()}-${today.getDate()}`;
+                        const sampleCalendar = {};
+                        sampleCalendar[key] = { subject: 'JS', topic: 'Reverse string & practice loops', time: '7:00 PM' };
+                        localStorage.setItem('calendarTopics', JSON.stringify(sampleCalendar));
+                    }
+                } catch (e) {
+                    console.warn('Could not seed dummy data', e);
+                }
+            }
+
+            function loadDemoPromptAndCode() {
+                const initialLang = (lang && lang.value) ? lang.value : 'JS';
+                const demoPrompt = templates[initialLang] && templates[initialLang][0] ? templates[initialLang][0] : null;
+                if (!demoPrompt) return;
+                promptTitle.innerText = demoPrompt.title;
+                promptText.innerText = demoPrompt.text;
+                promptCard.style.display = 'block';
+                const code = demoSnippets[initialLang] || '';
+                if (editor) editor.setValue(code); else answer.value = code;
+                if (consoleOutput) {
+                    consoleOutput.innerText = '[Demo data loaded]\n- Prompt prefilled\n- Sample code inserted\n- You can edit and run immediately';
+                }
+            }
+
+            function getCalendarTopicForToday() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem('calendarTopics') || '{}');
                     const today = new Date();
                     const m = today.getMonth();
                     const d = today.getDate();
                     const key = `${m}-${d}`;
                     return saved[key] || null;
-                }catch(e){ return null; }
+                } catch (e) { return null; }
             }
 
             // Simple expected templates & evaluators
@@ -265,7 +318,7 @@
   <textarea name="message" placeholder="Message"></textarea>
   <button type="submit">Send</button>
 </form>`,
-                    evaluate: (code)=>{
+                    evaluate: (code) => {
                         const hasForm = /<form[\s\S]*?>/i.test(code);
                         const hasName = /name\s*=\s*"name"/i.test(code);
                         const hasEmail = /type\s*=\s*"email"|name\s*=\s*"email"/i.test(code);
@@ -273,148 +326,102 @@
                         const hasSubmit = /type\s*=\s*"submit"|<button[\s\S]*?>/i.test(code);
                         const ok = hasForm && hasName && hasEmail && hasTextarea && hasSubmit;
                         const feedback = [];
-                        if(!hasForm) feedback.push('Add a <form> element.');
-                        if(!hasName) feedback.push('Include an input with name="name".');
-                        if(!hasEmail) feedback.push('Include an input for email (type="email" or name="email").');
-                        if(!hasTextarea) feedback.push('Add a <textarea> for the message.');
-                        if(!hasSubmit) feedback.push('Add a submit button (button or input type="submit").');
-                        return {ok, feedback, sample: expectedSolutions['Simple Contact Form'].sample};
+                        if (!hasForm) feedback.push('Add a <form> element.');
+                        if (!hasName) feedback.push('Include an input with name="name".');
+                        if (!hasEmail) feedback.push('Include an input for email (type="email" or name="email").');
+                        if (!hasTextarea) feedback.push('Add a <textarea> for the message.');
+                        if (!hasSubmit) feedback.push('Add a submit button (button or input type="submit").');
+                        return { ok, feedback, sample: expectedSolutions['Simple Contact Form'].sample };
                     }
                 },
                 'Semantic Article': {
                     sample: `<header>...</header><article><section>...</section></article><footer>...</footer>`,
-                    evaluate: (code)=>{
+                    evaluate: (code) => {
                         const h = /<header[\s\S]*?>/i.test(code);
                         const a = /<article[\s\S]*?>/i.test(code);
                         const s = /<section[\s\S]*?>/i.test(code);
                         const f = /<footer[\s\S]*?>/i.test(code);
                         const ok = h && a && s && f;
                         const feedback = [];
-                        if(!h) feedback.push('Include a <header> element.');
-                        if(!a) feedback.push('Include an <article> element.');
-                        if(!s) feedback.push('Include at least one <section>.');
-                        if(!f) feedback.push('Include a <footer>.');
-                        return {ok, feedback, sample: expectedSolutions['Semantic Article'].sample};
+                        if (!h) feedback.push('Include a <header> element.');
+                        if (!a) feedback.push('Include an <article> element.');
+                        if (!s) feedback.push('Include at least one <section>.');
+                        if (!f) feedback.push('Include a <footer>.');
+                        return { ok, feedback, sample: expectedSolutions['Semantic Article'].sample };
                     }
                 },
                 'Reverse String': {
                     sample: `function reverseString(s){ return s.split('').reverse().join(''); }`,
-                    evaluate: (code)=>{
-                        try{
+                    evaluate: (code) => {
+                        try {
                             // try to run user's code and call reverseString
                             const fn = new Function(code + '; return typeof reverseString === "function" ? reverseString("abc") : null;');
                             const res = fn();
                             const ok = res === 'cba';
                             const feedback = [];
-                            if(res === null) feedback.push('Define a function named reverseString that accepts a string and returns reversed string.');
-                            else if(!ok) feedback.push('The function did not return the expected reversed value for input "abc".');
-                            return {ok, feedback, sample: expectedSolutions['Reverse String'].sample};
-                        }catch(e){
-                            return {ok:false, feedback:['Error running your code: '+ (e.message||e)], sample: expectedSolutions['Reverse String'].sample};
+                            if (res === null) feedback.push('Define a function named reverseString that accepts a string and returns reversed string.');
+                            else if (!ok) feedback.push('The function did not return the expected reversed value for input "abc".');
+                            return { ok, feedback, sample: expectedSolutions['Reverse String'].sample };
+                        } catch (e) {
+                            return { ok: false, feedback: ['Error running your code: ' + (e.message || e)], sample: expectedSolutions['Reverse String'].sample };
                         }
                     }
                 },
                 'DOM Todo': {
                     sample: `// create elements, addEventListener, appendChild to manage todo items`,
-                    evaluate: (code)=>{
+                    evaluate: (code) => {
                         const hasDoc = /document\.|createElement\(|appendChild\(|addEventListener\(/i.test(code);
                         const ok = hasDoc;
-                        const feedback = ok?[]:['Use DOM methods like document.createElement, appendChild and addEventListener to build a todo.'];
-                        return {ok, feedback, sample: expectedSolutions['DOM Todo'].sample};
+                        const feedback = ok ? [] : ['Use DOM methods like document.createElement, appendChild and addEventListener to build a todo.'];
+                        return { ok, feedback, sample: expectedSolutions['DOM Todo'].sample };
                     }
                 },
                 'Differentiation Basics': {
                     sample: `// Example (JS): function derivative(f, x, h=1e-6) { return (f(x+h)-f(x-h))/(2*h); }`,
-                    evaluate: (code)=>{ return {ok:true, feedback:['Auto-evaluation for math topics is limited. If your approach looks correct, submit and the streak will be updated.'], sample: expectedSolutions['Differentiation Basics'].sample}; }
+                    evaluate: (code) => { return { ok: true, feedback: ['Auto-evaluation for math topics is limited. If your approach looks correct, submit and the streak will be updated.'], sample: expectedSolutions['Differentiation Basics'].sample }; }
                 },
                 'Integration & Applications': {
                     sample: `// Example (JS): numeric integration via trapezoid or use math library`,
-                    evaluate: (code)=>{ return {ok:true, feedback:['Auto-evaluation for math topics is limited. If your approach looks correct, submit and the streak will be updated.'], sample: expectedSolutions['Integration & Applications'].sample}; }
+                    evaluate: (code) => { return { ok: true, feedback: ['Auto-evaluation for math topics is limited. If your approach looks correct, submit and the streak will be updated.'], sample: expectedSolutions['Integration & Applications'].sample }; }
                 }
             };
 
-            genBtn.addEventListener('click', async ()=>{
-                genBtn.disabled = true;
-                genBtn.innerText = "Generating...";
-                
-                try {
-                    let token = localStorage.getItem('ss_token');
-                    if(!token) { alert('Please log in first.'); return; }
-                    
-                    // Fetch completed course ids
-                    let completedVideos = [];
-                    try {
-                        const progResp = await fetch('http://127.0.0.1:8000/api/user/progress', {headers:{'Authorization':`Bearer ${token}`}});
-                        if (progResp.ok) {
-                            const progData = await progResp.json();
-                            completedVideos = progData.profile_data?.completedVideos || [];
-                        }
-                    } catch(e){}
-                    
-                    // Fetch video titles to pass as context
-                    let topics = [];
-                    try {
-                        const vidResp = await fetch('http://127.0.0.1:8000/api/videos');
-                        if(vidResp.ok) {
-                            const videos = await vidResp.json();
-                            const completedVids = videos.filter(v => completedVideos.includes(v.id));
-                            topics = completedVids.map(v => v.title);
-                        }
-                    } catch(e){}
-
-                    // New Check: If the user hasn't completed any videos, block prompt generation!
-                    if (topics.length === 0) {
-                        showToast("You have to watch a class or complete a video in the catalog before testing in the practice lab. 📚", true);
-                        genBtn.disabled = false;
-                        genBtn.innerText = "Generate Prompt";
-                        return; // Exiting here means we skip the rest of the try block
+            genBtn.addEventListener('click', () => {
+                const cal = getCalendarTopicForToday();
+                if (cal && (cal.subject === 'HTML' || cal.subject === 'CSS' || cal.subject === 'JS')) {
+                    // use calendar topic
+                    const mapped = {
+                        'HTML': 'Simple Contact Form',
+                        'CSS': 'Styled Button',
+                        'JS': 'Reverse String'
+                    };
+                    const choice = mapped[cal.subject] || null;
+                    if (choice && expectedSolutions[choice]) {
+                        promptTitle.innerText = choice;
+                        promptText.innerText = `Practice topic from calendar: ${cal.subject} · ${cal.topic}`;
+                        lang.value = cal.subject === 'JS' ? 'JS' : cal.subject; // map
+                        lang.disabled = false;
+                        if (editor) editor.setValue(''); else answer.value = '';
+                        promptCard.style.display = 'block';
+                        return;
                     }
+                }
 
-                    // Call the AI endpoint
-                    const aiResp = await fetch('http://127.0.0.1:8000/api/ai/generate-practice', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            language: lang.value,
-                            topics: topics
-                        })
-                    });
-                    
-                    if(aiResp.ok) {
-                        const data = await aiResp.json();
-                        promptTitle.innerText = data.title;
-                        promptText.innerText = data.text;
-                    } else {
-                        // Fallback logic
-                        const p = getPrompt(lang.value);
-                        promptTitle.innerText = p.title;
-                        promptText.innerText = p.text;
-                    }
-                } catch(err) {
-                    const p = getPrompt(lang.value);
-                    promptTitle.innerText = p.title;
-                    promptText.innerText = p.text;
-                }
-                
-                // Show the prompt block and reset button only if we actually generated one
-                if (promptTitle.innerText) {
-                    if(editor) editor.setValue(''); else answer.value = '';
-                    promptCard.style.display = 'block';
-                }
-                genBtn.disabled = false;
-                genBtn.innerText = "Generate Prompt";
+                const p = getPrompt(lang.value);
+                if (!p) return;
+                promptTitle.innerText = p.title;
+                promptText.innerText = p.text;
+                if (editor) editor.setValue(''); else answer.value = '';
+                promptCard.style.display = 'block';
             });
 
-            function completeStreakAndReturn(){
-                try{
-                    const stored = JSON.parse(localStorage.getItem('streakDays')||'{}');
+            function completeStreakAndReturn() {
+                try {
+                    const stored = JSON.parse(localStorage.getItem('streakDays') || '{}');
                     // find first incomplete day (1..30)
                     let marked = false;
-                    for(let i=1;i<=30;i++){
-                        if(stored[i] !== 'completed'){
+                    for (let i = 1; i <= 30; i++) {
+                        if (stored[i] !== 'completed') {
                             stored[i] = 'completed';
                             marked = i;
                             break;
@@ -422,9 +429,9 @@
                     }
                     localStorage.setItem('streakDays', JSON.stringify(stored));
                     // optional: count
-                    let count = 0; Object.values(stored).forEach(v=>{ if(v==='completed') count++; });
-                    showToast('Practice submitted. Streak updated! Completed days: ' + count, false);
-                }catch(e){
+                    let count = 0; Object.values(stored).forEach(v => { if (v === 'completed') count++; });
+                    alert('Practice submitted. Streak updated. Completed days: ' + count);
+                } catch (e) {
                     console.error(e);
                 }
                 // go back to demo where updated streak will be visible
@@ -433,57 +440,61 @@
                 }, 2000); // Give user enough time to see the toast before redirect
             }
 
-            submit.addEventListener('click', ()=>{
+            submit.addEventListener('click', () => {
                 const userCode = (window.practiceEditor ? window.practiceEditor.getValue() : (answer.value || ''));
-                if(!userCode.trim()){
-                    if(!confirm('You have not entered any notes/code. Mark practice as complete anyway?')) return;
+                if (!userCode.trim()) {
+                    if (!confirm('You have not entered any notes/code. Mark practice as complete anyway?')) return;
                 }
 
                 // Determine evaluator based on promptTitle
                 const prompt = promptTitle.innerText;
                 const evaluator = expectedSolutions[prompt];
 
-                let result = {ok:false, feedback:['No automated evaluator available for this prompt.'], sample: ''};
-                if(evaluator && typeof evaluator.evaluate === 'function'){
+                let result = { ok: false, feedback: ['No automated evaluator available for this prompt.'], sample: '' };
+                if (evaluator && typeof evaluator.evaluate === 'function') {
                     result = evaluator.evaluate(userCode);
                 } else {
                     // fallback: simple substring checks for language
                     const s = userCode.toLowerCase();
-                    if(lang.value === 'CSS') result = {ok: /border-radius|background|flex|grid/.test(s), feedback: ['Basic checks failed. Ensure you used border-radius or background or flex/grid.'], sample: ''};
-                    else if(lang.value === 'Python') result = {ok: /def |return |for |while |if /.test(s), feedback: ['Simple check failed. Make sure you wrote a Python function.'], sample: ''};
+                    if (lang.value === 'CSS') result = { ok: /border-radius|background|flex|grid/.test(s), feedback: ['Basic checks failed. Ensure you used border-radius or background or flex/grid.'], sample: '' };
+                    else if (lang.value === 'Python') result = { ok: /def |return |for |while |if /.test(s), feedback: ['Simple check failed. Make sure you wrote a Python function.'], sample: '' };
                 }
 
                 // Save attempt
-                try{
-                    const logs = JSON.parse(localStorage.getItem('practiceLogs')||'[]');
-                    logs.push({ date: new Date().toISOString(), lang: lang.value, prompt: prompt, answer: userCode.slice(0,4000), result: result.ok });
+                try {
+                    const logs = JSON.parse(localStorage.getItem('practiceLogs') || '[]');
+                    logs.push({ date: new Date().toISOString(), lang: lang.value, prompt: prompt, answer: userCode.slice(0, 4000), result: result.ok });
                     localStorage.setItem('practiceLogs', JSON.stringify(logs));
-                }catch(e){ console.error(e); }
+                } catch (e) { console.error(e); }
 
                 const fb = document.getElementById('feedback');
-                if(result.ok){
+                if (result.ok) {
                     fb.style.display = 'block';
                     fb.innerHTML = `<div style="color:#7cf596;font-weight:700;">Practice passed ✅</div><div style="margin-top:0.5rem;color:#bdc9ff">Great job — your submission met the checks.</div>`;
                     // mark streak and return after short delay
-                    setTimeout(()=> completeStreakAndReturn(), 900);
+                    setTimeout(() => completeStreakAndReturn(), 900);
                 } else {
                     fb.style.display = 'block';
                     fb.innerHTML = `<div style="color:#ff7b7b;font-weight:700;">Practice needs work ✗</div>
-                        <div style="margin-top:0.5rem;color:#bdc9ff">Feedback:<ul style='color:#f1f6ff'>${result.feedback.map(f=>`<li>${f}</li>`).join('')}</ul></div>
+                        <div style="margin-top:0.5rem;color:#bdc9ff">Feedback:<ul style='color:#f1f6ff'>${result.feedback.map(f => `<li>${f}</li>`).join('')}</ul></div>
                         <details style="margin-top:0.6rem;color:#cfe2ff"><summary style="cursor:pointer;color:#9fb0ff">Show example solution</summary>
-                            <pre style="background:#07102a;padding:0.6rem;border-radius:6px;overflow:auto;color:#e6ecff">${(result.sample||'No sample available')}</pre>
+                            <pre style="background:#07102a;padding:0.6rem;border-radius:6px;overflow:auto;color:#e6ecff">${(result.sample || 'No sample available')}</pre>
                         </details>`;
                 }
             });
 
-            skip.addEventListener('click', ()=>{
-                if(confirm('Skip this practice? It will not increase your streak.')){
+            skip.addEventListener('click', () => {
+                if (confirm('Skip this practice? It will not increase your streak.')) {
                     window.location.href = 'demo.html';
                 }
             });
+
+            seedDummyData();
+            loadDemoPromptAndCode();
 
         })();
     </script>
     <script src="chatbot.js"></script>
 </body>
+
 </html>
