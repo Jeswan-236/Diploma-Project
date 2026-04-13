@@ -12,226 +12,74 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="demo2.css?v=4">
     <style>
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .video-card {
-            background: rgba(12, 17, 39, 0.92);
-            border: 1px solid rgba(120, 141, 255, 0.12);
-            border-radius: 16px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-        }
-
-        .video-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
-            border-color: rgba(99, 102, 241, 0.3);
-        }
-
-        .video-thumb {
-            width: 100%;
-            height: 160px;
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: rgba(99, 102, 241, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .video-thumb img {
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
         }
-
-        .video-content {
-            padding: 1rem;
-        }
-
-        .video-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #e6ecff;
-            margin-bottom: 0.5rem;
-            line-height: 1.3;
-        }
-
-        .video-desc {
-            font-size: 0.9rem;
-            color: #a9b3ff;
-            line-height: 1.4;
-            margin-bottom: 0.75rem;
-        }
-
-        .video-link {
-            color: #8b5cf6;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .detail-section {
-            background: rgba(12, 17, 39, 0.92);
-            border: 1px solid rgba(120, 141, 255, 0.12);
-            border-radius: 24px;
+        
+        .modal-content {
+            background: linear-gradient(135deg, rgba(10, 12, 25, 0.95), rgba(2, 6, 18, 0.95));
+            margin: 5% auto;
             padding: 2rem;
-            margin-bottom: 2rem;
-            display: none;
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
-
-        .detail-section.active {
-            display: block;
-        }
-
-        .detail-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1.5rem;
-        }
-
-        .detail-close {
-            background: none;
-            border: none;
-            color: #8b95d7;
-            font-size: 1.8rem;
+        
+        .close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
             cursor: pointer;
-            padding: 0;
+            margin-top: -10px;
         }
-
-        .detail-close:hover {
-            color: #e6ecff;
+        
+        .close-modal:hover {
+            color: #fff;
         }
-
-        .video-frame {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            border-radius: 20px;
-            overflow: hidden;
-            background: #000;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 1.5rem;
+        
+        .video-card.completed {
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.1) !important;
         }
-
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
+        
+        .video-card.completed .video-thumb {
+            background: #10b981;
         }
-
-        .meta-grid {
-            display: grid;
-            gap: 1rem;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            margin-bottom: 1.5rem;
-        }
-
-        .meta-item {
-            background: rgba(18, 25, 55, 0.95);
-            border-radius: 12px;
-            padding: 1rem;
-            border: 1px solid rgba(100, 116, 255, 0.12);
-        }
-
-        .meta-item span {
-            display: block;
-            font-size: 0.8rem;
-            color: #8b95d7;
-            margin-bottom: 0.35rem;
-        }
-
-        .meta-item strong {
-            font-size: 1rem;
-            color: #e6ecff;
-        }
-
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
-            color: #dbe1ff;
-        }
-
-        .description {
-            background: rgba(17, 24, 56, 0.98);
-            border: 1px solid rgba(139, 149, 214, 0.08);
-            border-radius: 12px;
-            padding: 1rem;
-            white-space: pre-wrap;
-            line-height: 1.6;
-            color: #dfe3ff;
-            font-size: 0.95rem;
-        }
-
-        .transcript-section {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .button-row {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin-top: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .mark-complete-btn {
-            background: linear-gradient(135deg, #10b981, #059669);
-            border: none;
+        
+        .video-card.completed .video-thumb i {
             color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 999px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: box-shadow 0.3s ease;
         }
-
-        .mark-complete-btn:hover:not(:disabled) {
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
-        }
-
-        .mark-complete-btn:disabled {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            cursor: not-allowed;
-        }
-
+        
         .completion-badge {
-            display: inline-block;
+            position: absolute;
+            top: 10px;
+            right: 10px;
             background: #10b981;
             color: white;
-            padding: 0.25rem 0.75rem;
+            padding: 4px 8px;
             border-radius: 12px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
-            margin-left: 0.5rem;
         }
-
-        @media (max-width: 768px) {
-            .detail-section {
-                padding: 1.5rem;
-            }
-
-            .meta-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            }
-
-            .video-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 1rem;
-            }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
     </style>
 </head>
@@ -248,296 +96,188 @@
 
     <main style="padding:2rem;">
         <section class="section">
-            <h2 id="practiceTitle" class="section-title"><i class="fas fa-code"></i> Coding Practice — HTML, CSS, JavaScript, Python</h2>
-            <p id="practiceSubtitle" style="color:#bdc9ff; margin-bottom:1.5rem;">Select a video to watch and learn. Mark as complete when finished.</p>
+            <h2 class="section-title"><i class="fas fa-code"></i> Coding Practice — HTML, CSS, JavaScript, Python</h2>
+            <p style="color:#bdc9ff; margin-bottom:1rem;">Select a video to watch and mark as complete when finished.</p>
 
-            <div id="videoGrid" class="video-grid">
-                <!-- Videos loaded here -->
-            </div>
-
-            <!-- Detail Section -->
-            <div id="detailSection" class="detail-section">
-                <div class="detail-header">
-                    <h3 id="detailTitle" style="color:#e6ecff; margin:0; flex:1;">Video Details</h3>
-                    <button class="detail-close" onclick="closeDetail()">&times;</button>
-                </div>
-
-                <div class="video-frame">
-                    <iframe id="videoFrame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; compute-pressure" allowfullscreen></iframe>
-                </div>
-
-                <div class="button-row">
-                    <a id="watchLink" href="#" target="_blank" rel="noopener" style="color:#eef3ff;text-decoration:none;border-radius:999px;padding:0.7rem 1rem;background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.18);font-size:0.9rem;">
-                        <i class="fas fa-external-link-alt"></i> Open on YouTube
-                    </a>
-                    <button id="completeBtn" class="mark-complete-btn" onclick="markComplete()">
-                        <i class="fas fa-check"></i> Mark as Complete
-                    </button>
-                </div>
-
-                <div class="meta-grid">
-                    <div class="meta-item"><span>Channel</span><strong id="channelTitle"></strong></div>
-                    <div class="meta-item"><span>Duration</span><strong id="duration"></strong></div>
-                    <div class="meta-item"><span>Views</span><strong id="viewCount"></strong></div>
-                    <div class="meta-item"><span>Likes</span><strong id="likeCount"></strong></div>
-                    <div class="meta-item"><span>Published</span><strong id="publishedAt"></strong></div>
-                </div>
-
-                <div class="section-title">
-                    <h3 style="margin:0;">Description</h3>
-                </div>
-                <div class="description" id="description"></div>
-
-                <div class="section-title">
-                    <h3 style="margin:0;">Transcript</h3>
-                </div>
-                <div class="description transcript-section" id="transcript"></div>
+            <div class="video-grid" id="videoGrid"
+                style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;">
+                <!-- Videos will be loaded here -->
             </div>
         </section>
     </main>
 
+    <!-- Video Player Modal -->
+    <div id="videoModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeVideoModal()">&times;</span>
+            <h3 id="modalVideoTitle"></h3>
+            <div id="videoPlayerContainer" style="margin:1rem 0;">
+                <!-- YouTube player will be embedded here -->
+            </div>
+            <div style="text-align:center;margin-top:1rem;">
+                <button id="completeVideoBtn" class="glow-btn" onclick="markVideoComplete()">
+                    <i class="fas fa-check"></i> Mark as Complete
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer style="padding:1rem;text-align:center;color:#9fb0ff;">
         <p><i class="fas fa-laptop-code"></i> Practice-by-doing: watch, code, repeat.</p>
     </footer>
-
-    <script src="auth-sync.js"></script>
     <script>
-        let allVideos = [];
-        let completedVideos = new Set();
         let currentVideoId = null;
-        const selectedCourseId = new URLSearchParams(window.location.search).get('course');
-
-        function formatCourseId(id) {
-            if (!id) return null;
-            return id
-                .replace(/^course-/, '')
-                .replace(/-/g, ' ')
-                .replace(/\b\w/g, (c) => c.toUpperCase());
-        }
-
-        function updatePracticeHeading() {
-            if (!selectedCourseId) return;
-            const courseName = formatCourseId(selectedCourseId);
-            const title = document.getElementById('practiceTitle');
-            const subtitle = document.getElementById('practiceSubtitle');
-            if (title) title.textContent = `Practice — ${courseName}`;
-            if (subtitle) subtitle.textContent = `Selected course: ${courseName}. Choose a related video and mark it complete.`;
-        }
-
+        let completedVideos = new Set();
+        
+        // Load videos from database
         async function loadVideos() {
             try {
-                const token = localStorage.getItem('ss_token');
-                if (!token) {
-                    document.getElementById('videoGrid').innerHTML = '<p style="color:#bdc9ff;grid-column: 1 / -1;">Please log in from the portal to view your enrolled courses.</p>';
+                const response = await fetch('http://127.0.0.1:8000/api/videos?category=coding');
+                const videos = await response.json();
+                
+                // Load user progress to check completed videos
+                await loadUserProgress();
+                
+                const grid = document.getElementById('videoGrid');
+                grid.innerHTML = '';
+                
+                // Get enrolled courses from local storage
+                let enrolledCourses = [];
+                try {
+                    const stored = localStorage.getItem('enrolledCourses');
+                    if (stored) enrolledCourses = JSON.parse(stored);
+                } catch(e) {}
+                
+                // Filter to only show enrolled videos
+                const enrolledVideos = videos.filter(v => enrolledCourses.includes(v.id));
+                
+                if (enrolledVideos.length === 0) {
+                    grid.innerHTML = '<p style="color:#bdc9ff; grid-column: 1 / -1;">You have not enrolled in any coding videos yet. Go to Courses to enroll.</p>';
                     return;
                 }
                 
-                const response = await fetch('http://127.0.0.1:8000/api/user/enrollments', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                enrolledVideos.forEach(video => {
+                    const isCompleted = completedVideos.has(video.id);
+                    const card = document.createElement('div');
+                    card.className = `video-card ${isCompleted ? 'completed' : ''}`;
+                    card.onclick = () => openVideoModal(video);
+                    
+                    card.innerHTML = `
+                        <div class="video-thumb">
+                            <i class="fas fa-play"></i>
+                            ${isCompleted ? '<div class="completion-badge"><i class="fas fa-check"></i></div>' : ''}
+                        </div>
+                        <h4>${video.title}</h4>
+                        <p>${video.description}</p>
+                        <div class="video-link">
+                            <i class="fas fa-play-circle"></i> ${isCompleted ? 'Watch Again' : 'Watch Video'}
+                        </div>
+                    `;
+                    
+                    grid.appendChild(card);
                 });
-                
-                if (!response.ok) throw new Error("Failed to fetch");
-                
-                const enrolledVideos = await response.json();
-                allVideos = enrolledVideos.filter(v => v.category === 'coding');
-                
-                await loadUserProgress();
-                
-                if (allVideos.length === 0) {
-                    document.getElementById('videoGrid').innerHTML = '<p style="color:#8b95d7;grid-column: 1 / -1;text-align: center;padding: 2rem;">You have not enrolled in any coding courses yet. Head to the Course Library to get started!</p>';
-                } else {
-                    renderVideos();
-                }
             } catch (error) {
                 console.error('Error loading videos:', error);
-                document.getElementById('videoGrid').innerHTML = '<p style="color:#ff6b6b;grid-column: 1 / -1;">Error loading videos. Please try again later.</p>';
+                document.getElementById('videoGrid').innerHTML = '<p style="color:#bdc9ff;">Error loading videos. Please try again later.</p>';
             }
         }
-
+        
+        // Load user progress to get completed videos
         async function loadUserProgress() {
             try {
                 const token = localStorage.getItem('ss_token');
                 if (!token) return;
-
+                
                 const response = await fetch('http://127.0.0.1:8000/api/user/progress', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
-
+                
                 if (response.ok) {
                     const data = await response.json();
-                    const completed = data.profile_data?.completedVideos || [];
+                    const profileData = data.profile_data || {};
+                    const completed = profileData.completedVideos || [];
                     completedVideos = new Set(completed);
                 }
             } catch (error) {
                 console.error('Error loading progress:', error);
             }
         }
-
-        function renderVideos() {
-            const grid = document.getElementById('videoGrid');
-            grid.innerHTML = '';
-
-            allVideos.forEach(video => {
-                const isCompleted = completedVideos.has(video.id);
-                const card = document.createElement('div');
-                card.className = 'video-card';
-                card.onclick = () => showDetail(video);
-
-                const thumbnail = video.thumbnail_url || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE2MCIgZmlsbD0iIzFiMjAzZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2MzY2ZjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBUaHVtYm5haWw8L3RleHQ+PC9zdmc+';
-                const badge = isCompleted ? `<span class="completion-badge"><i class="fas fa-check"></i> Done</span>` : '';
-
-                card.innerHTML = `
-                    <div class="video-thumb">
-                        <img src="${thumbnail}" alt="${video.title}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE2MCIgZmlsbD0iIzFiMjAzZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2MzY2ZjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5WaWRlbzwvdGV4dD48L3N2Zz4='">
-                    </div>
-                    <div class="video-content">
-                        <div class="video-title">${video.title || 'Untitled Video'}${badge}</div>
-                        <p class="video-desc">${video.description || 'No description available.'}</p>
-                        <div class="video-link"><i class="fas fa-play-circle"></i> View Details</div>
-                    </div>
+        
+        // Open video modal
+        function openVideoModal(video) {
+            currentVideoId = video.id;
+            document.getElementById('modalVideoTitle').textContent = video.title;
+            
+            // Extract video ID from YouTube URL
+            const videoId = extractYouTubeVideoId(video.url);
+            if (videoId) {
+                const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                document.getElementById('videoPlayerContainer').innerHTML = `
+                    <iframe width="100%" height="400" 
+                            src="${embedUrl}" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                    </iframe>
                 `;
-
-                grid.appendChild(card);
-            });
+            } else {
+                document.getElementById('videoPlayerContainer').innerHTML = `
+                    <p style="color:#bdc9ff;">Unable to load video player. 
+                    <a href="${video.url}" target="_blank" style="color:#8b5cf6;">Open on YouTube</a></p>
+                `;
+            }
+            
+            document.getElementById('videoModal').style.display = 'block';
         }
-
+        
+        // Close video modal
+        function closeVideoModal() {
+            document.getElementById('videoModal').style.display = 'none';
+            document.getElementById('videoPlayerContainer').innerHTML = '';
+            currentVideoId = null;
+        }
+        
+        // Extract YouTube video ID from various URL formats
         function extractYouTubeVideoId(url) {
-            if (!url) return null;
             const patterns = [
-                /(?:youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
-                /youtu\.be\/([a-zA-Z0-9_-]{11})/
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+                /youtube\.com\/results\?search_query=([^&]+)/
             ];
+            
             for (const pattern of patterns) {
                 const match = url.match(pattern);
-                if (match) return match[1];
+                if (match && match[1]) {
+                    // If it's a search query, we can't embed it directly
+                    if (url.includes('results?search_query=')) {
+                        return null;
+                    }
+                    return match[1];
+                }
             }
             return null;
         }
-
-        function extractYouTubeSearchQuery(url) {
-            if (!url) return null;
-            try {
-                const parsed = new URL(url);
-                const searchQuery = parsed.searchParams.get('q') || parsed.searchParams.get('search_query');
-                return searchQuery ? decodeURIComponent(searchQuery.replace(/\+/g, ' ')) : null;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        async function showDetail(video) {
-            currentVideoId = video.id;
-            const detailSection = document.getElementById('detailSection');
-            detailSection.classList.add('active');
-            document.getElementById('watchLink').href = video.url;
-
-            try {
-                const youtubeVideoId = extractYouTubeVideoId(video.url);
-                let response;
-                const token = localStorage.getItem('ss_token');
-
-                // Clear previous transcript and show loading state
-                const transcriptEl = document.getElementById('transcript');
-                transcriptEl.textContent = 'Fetching transcript from database/YouTube... Please wait a moment.';
-                transcriptEl.style.color = '#a9b3ff';
-
-                const headers = {
-                    'Content-Type': 'application/json'
-                };
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-
-                if (youtubeVideoId) {
-                    response = await fetch(`http://127.0.0.1:8000/api/youtube/video?video_id=${encodeURIComponent(youtubeVideoId)}`, { headers });
-                } else {
-                    const searchQuery = extractYouTubeSearchQuery(video.url);
-                    if (searchQuery) {
-                        response = await fetch(`http://127.0.0.1:8000/api/youtube/video?query=${encodeURIComponent(searchQuery)}`, { headers });
-                    }
-                }
-
-                if (!response || !response.ok) {
-                    if (response && response.status === 401) {
-                        alert('Your session has expired. Please log in again.');
-                        window.location.href = 'portal.html';
-                        return;
-                    }
-                    document.getElementById('detailTitle').textContent = video.title;
-                    document.getElementById('videoFrame').src = '';
-                    document.getElementById('channelTitle').textContent = 'N/A';
-                    document.getElementById('duration').textContent = 'Unknown';
-                    document.getElementById('viewCount').textContent = 'N/A';
-                    document.getElementById('likeCount').textContent = 'N/A';
-                    document.getElementById('publishedAt').textContent = 'Unknown';
-                    document.getElementById('description').textContent = video.description || 'No description available.';
-                    document.getElementById('transcript').textContent = 'This video URL is not a direct YouTube watch link, so metadata cannot be loaded automatically. Click Open on YouTube to view it.';
-
-                    updateCompleteButton();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    return;
-                }
-
-                const data = await response.json();
-
-                document.getElementById('detailTitle').textContent = data.title;
-                document.getElementById('videoFrame').src = data.embed_url;
-                document.getElementById('watchLink').href = data.watch_url;
-                document.getElementById('channelTitle').textContent = data.channel_title || 'Unknown';
-                document.getElementById('duration').textContent = data.duration || 'Unknown';
-                document.getElementById('viewCount').textContent = Number(data.view_count || 0).toLocaleString();
-                document.getElementById('likeCount').textContent = Number(data.like_count || 0).toLocaleString();
-                document.getElementById('publishedAt').textContent = data.published_at ? new Date(data.published_at).toLocaleDateString() : 'Unknown';
-                document.getElementById('description').textContent = data.description || 'No description available.';
-                
-                if (data.transcript && data.transcript.available) {
-                    transcriptEl.textContent = data.transcript.text;
-                    transcriptEl.style.color = '#e6ecff';
-                } else {
-                    transcriptEl.textContent = data.transcript?.text || 'Transcript not available for this video.';
-                    transcriptEl.style.color = '#ff6b6b';
-                }
-
-                updateCompleteButton();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            } catch (error) {
-                console.error('Error loading video details:', error);
-                alert('Failed to load video details. Please try again.');
-            }
-        }
-
-        function closeDetail() {
-            document.getElementById('detailSection').classList.remove('active');
-            document.getElementById('videoFrame').src = '';
-            currentVideoId = null;
-        }
-
-        function updateCompleteButton() {
-            const btn = document.getElementById('completeBtn');
-            if (completedVideos.has(currentVideoId)) {
-                btn.classList.add('completed');
-                btn.innerHTML = '<i class="fas fa-check"></i> Already Completed';
-                btn.disabled = true;
-            } else {
-                btn.classList.remove('completed');
-                btn.innerHTML = '<i class="fas fa-check"></i> Mark as Complete';
-                btn.disabled = false;
-            }
-        }
-
-        async function markComplete() {
+        
+        // Mark video as complete
+        async function markVideoComplete() {
             if (!currentVideoId) return;
-
+            
             try {
                 const token = localStorage.getItem('ss_token');
                 if (!token) {
-                    alert('Please log in to track progress.');
+                    alert('Please log in to track video progress.');
                     return;
                 }
-
+                
+                // Add to completed videos set
                 completedVideos.add(currentVideoId);
-                const profileData = { completedVideos: Array.from(completedVideos) };
-
+                
+                // Save progress to backend
+                const profileData = {
+                    completedVideos: Array.from(completedVideos)
+                };
+                
                 const response = await fetch('http://127.0.0.1:8000/api/user/progress', {
                     method: 'PUT',
                     headers: {
@@ -546,21 +286,26 @@
                     },
                     body: JSON.stringify({ profile_data: profileData })
                 });
-
+                
                 if (response.ok) {
-                    renderVideos();
-                    updateCompleteButton();
+                    // Update UI
+                    loadVideos();
+                    closeVideoModal();
+                    
+                    // Show success message
                     showToast('✅ Video marked as complete!', false);
                 } else {
                     throw new Error('Failed to save progress');
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error marking video complete:', error);
                 showToast('❌ Failed to save progress. Please try again.', true);
             }
         }
-
+        
+        // Toast notification function
         function showToast(message, isError = false) {
+            // Create toast element
             const toast = document.createElement('div');
             toast.style.cssText = `
                 position: fixed;
@@ -573,18 +318,29 @@
                 font-weight: 600;
                 z-index: 10000;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease-out;
             `;
             toast.textContent = message;
+            
             document.body.appendChild(toast);
+            
+            // Remove after 3 seconds
             setTimeout(() => {
-                document.body.removeChild(toast);
+                toast.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => document.body.removeChild(toast), 300);
             }, 3000);
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            updatePracticeHeading();
-            loadVideos();
-        });
+        
+        // Load videos when page loads
+        document.addEventListener('DOMContentLoaded', loadVideos);
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('videoModal');
+            if (event.target === modal) {
+                closeVideoModal();
+            }
+        }
     </script>
     <script src="chatbot.js"></script>
 </body>

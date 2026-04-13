@@ -17,6 +17,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+    <style>
+        /* Rich Dark Theme for CodeEditor */
+        .CodeMirror {
+            background: #131836 !important;
+            color: #d1d9ff !important;
+            border: 1px solid rgba(130, 160, 255, 0.2) !important;
+            border-radius: 10px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
+            height: 360px !important;
+        }
+        .CodeMirror-gutters {
+            background-color: #0c1024 !important;
+            border-right: 1px solid rgba(130, 160, 255, 0.1) !important;
+        }
+        .CodeMirror-cursor {
+            border-left: 2px solid #5a8cff !important;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -83,6 +103,41 @@
             const answer = document.getElementById('practiceAnswer');
             const submit = document.getElementById('submitPractice');
             const skip = document.getElementById('skipPractice');
+
+            function showToast(message, isError = false) {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 24px;
+                    right: 24px;
+                    background: ${isError ? 'linear-gradient(135deg, #ef4444, #991b1b)' : 'linear-gradient(135deg, #10b981, #047857)'};
+                    color: white;
+                    padding: 16px 24px;
+                    border-radius: 12px;
+                    font-weight: 500;
+                    font-size: 0.95rem;
+                    z-index: 10000;
+                    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+                    transform: translateX(120%);
+                    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    max-width: 380px;
+                    border: 1px solid rgba(255,255,255,0.15);
+                `;
+                toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="font-size: 1.4rem;"></i> <span style="line-height:1.4;">${message}</span>`;
+                document.body.appendChild(toast);
+                
+                // Trigger pop animation
+                setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+                
+                // Remove smoothly
+                setTimeout(() => {
+                    toast.style.transform = 'translateX(120%)';
+                    setTimeout(() => document.body.removeChild(toast), 400);
+                }, 5000);
+            }
 
             const templates = {
                 'HTML': [
@@ -167,7 +222,16 @@
                             writeConsole('Opened HTML preview in a new window/tab.');
                         }catch(e){ writeConsole('Could not open preview: '+e.message); }
                     } else if(selectedLang === 'Python'){
-                        writeConsole('Python execution is not enabled in this static build. Consider adding Pyodide to run Python in-browser.');
+                        Sk.configure({
+                            output: function(text) { writeConsole(text); },
+                            read: function(x) {
+                                if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                                    throw "File not found: '" + x + "'";
+                                return Sk.builtinFiles["files"][x];
+                            }
+                        });
+                        const promise = Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true));
+                        promise.then(() => {}, (err) => writeConsole(err.toString()));
                     } else if(selectedLang === 'CSS'){
                         writeConsole('CSS snippet saved — apply it inside an HTML file or use a live preview.');
                     } else {
@@ -269,33 +333,79 @@
                 }
             };
 
-            genBtn.addEventListener('click', ()=>{
-                const cal = getCalendarTopicForToday();
-                if(cal && (cal.subject === 'HTML' || cal.subject === 'CSS' || cal.subject === 'JS')){
-                    // use calendar topic
-                    const mapped = {
-                        'HTML':'Simple Contact Form',
-                        'CSS':'Styled Button',
-                        'JS':'Reverse String'
-                    };
-                    const choice = mapped[cal.subject] || null;
-                    if(choice && expectedSolutions[choice]){
-                        promptTitle.innerText = choice;
-                        promptText.innerText = `Practice topic from calendar: ${cal.subject} · ${cal.topic}`;
-                        lang.value = cal.subject === 'JS' ? 'JS' : cal.subject; // map
-                        lang.disabled = false;
-                        if(editor) editor.setValue(''); else answer.value = '';
-                        promptCard.style.display = 'block';
-                        return;
-                    }
-                }
+            genBtn.addEventListener('click', async ()=>{
+                genBtn.disabled = true;
+                genBtn.innerText = "Generating...";
+                
+                try {
+                    let token = localStorage.getItem('ss_token');
+                    if(!token) { alert('Please log in first.'); return; }
+                    
+                    // Fetch completed course ids
+                    let completedVideos = [];
+                    try {
+                        const progResp = await fetch('http://127.0.0.1:8000/api/user/progress', {headers:{'Authorization':`Bearer ${token}`}});
+                        if (progResp.ok) {
+                            const progData = await progResp.json();
+                            completedVideos = progData.profile_data?.completedVideos || [];
+                        }
+                    } catch(e){}
+                    
+                    // Fetch video titles to pass as context
+                    let topics = [];
+                    try {
+                        const vidResp = await fetch('http://127.0.0.1:8000/api/videos');
+                        if(vidResp.ok) {
+                            const videos = await vidResp.json();
+                            const completedVids = videos.filter(v => completedVideos.includes(v.id));
+                            topics = completedVids.map(v => v.title);
+                        }
+                    } catch(e){}
 
-                const p = getPrompt(lang.value);
-                if(!p) return;
-                promptTitle.innerText = p.title;
-                promptText.innerText = p.text;
-                if(editor) editor.setValue(''); else answer.value = '';
-                promptCard.style.display = 'block';
+                    // New Check: If the user hasn't completed any videos, block prompt generation!
+                    if (topics.length === 0) {
+                        showToast("You have to watch a class or complete a video in the catalog before testing in the practice lab. 📚", true);
+                        genBtn.disabled = false;
+                        genBtn.innerText = "Generate Prompt";
+                        return; // Exiting here means we skip the rest of the try block
+                    }
+
+                    // Call the AI endpoint
+                    const aiResp = await fetch('http://127.0.0.1:8000/api/ai/generate-practice', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            language: lang.value,
+                            topics: topics
+                        })
+                    });
+                    
+                    if(aiResp.ok) {
+                        const data = await aiResp.json();
+                        promptTitle.innerText = data.title;
+                        promptText.innerText = data.text;
+                    } else {
+                        // Fallback logic
+                        const p = getPrompt(lang.value);
+                        promptTitle.innerText = p.title;
+                        promptText.innerText = p.text;
+                    }
+                } catch(err) {
+                    const p = getPrompt(lang.value);
+                    promptTitle.innerText = p.title;
+                    promptText.innerText = p.text;
+                }
+                
+                // Show the prompt block and reset button only if we actually generated one
+                if (promptTitle.innerText) {
+                    if(editor) editor.setValue(''); else answer.value = '';
+                    promptCard.style.display = 'block';
+                }
+                genBtn.disabled = false;
+                genBtn.innerText = "Generate Prompt";
             });
 
             function completeStreakAndReturn(){
@@ -313,12 +423,14 @@
                     localStorage.setItem('streakDays', JSON.stringify(stored));
                     // optional: count
                     let count = 0; Object.values(stored).forEach(v=>{ if(v==='completed') count++; });
-                    alert('Practice submitted. Streak updated. Completed days: ' + count);
+                    showToast('Practice submitted. Streak updated! Completed days: ' + count, false);
                 }catch(e){
                     console.error(e);
                 }
                 // go back to demo where updated streak will be visible
-                window.location.href = 'demo.html';
+                setTimeout(() => {
+                    window.location.href = 'demo.html';
+                }, 2000); // Give user enough time to see the toast before redirect
             }
 
             submit.addEventListener('click', ()=>{
