@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Practice Lab · skill stalker</title>
+    <title>Practice Lab ┬╖ skill stalker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700,800&display=swap"
@@ -273,10 +273,11 @@
                         <textarea id="practiceAnswer" placeholder="# Write your code here..."></textarea>
                     </div>
 
-                    <button id="runCodeBtn" class="glow-btn run-btn">Run Code <span>▶</span></button>
+                    <button id="runCodeBtn" class="glow-btn run-btn">Run Code <span>Γû╢</span></button>
 
                     <div class="action-row">
                         <button id="submitPractice" class="glow-btn">Submit Practice</button>
+                        <button id="skipPractice" class="cancel-btn">Skip</button>
                     </div>
 
                     <div id="consoleOutput" class="console-box">Ready to run...</div>
@@ -286,7 +287,7 @@
     </main>
 
     <footer class="practice-footer">
-        <p><i class="fas fa-heart"></i> Practice builds skill — one step at a time.</p>
+        <p><i class="fas fa-heart"></i> Practice builds skill ΓÇö one step at a time.</p>
     </footer>
 
     <script>
@@ -298,41 +299,7 @@
             const promptText = document.getElementById('promptText');
             const answer = document.getElementById('practiceAnswer');
             const submit = document.getElementById('submitPractice');
-
-            function showToast(message, isError = false) {
-                const toast = document.createElement('div');
-                toast.style.cssText = `
-                    position: fixed;
-                    top: 24px;
-                    right: 24px;
-                    background: ${isError ? 'linear-gradient(135deg, #ef4444, #991b1b)' : 'linear-gradient(135deg, #10b981, #047857)'};
-                    color: white;
-                    padding: 16px 24px;
-                    border-radius: 12px;
-                    font-weight: 500;
-                    font-size: 0.95rem;
-                    z-index: 10000;
-                    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-                    transform: translateX(120%);
-                    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    max-width: 380px;
-                    border: 1px solid rgba(255,255,255,0.15);
-                `;
-                toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}" style="font-size: 1.4rem;"></i> <span style="line-height:1.4;">${message}</span>`;
-                document.body.appendChild(toast);
-
-                // Trigger pop animation
-                setTimeout(() => toast.style.transform = 'translateX(0)', 10);
-
-                // Remove smoothly
-                setTimeout(() => {
-                    toast.style.transform = 'translateX(120%)';
-                    setTimeout(() => document.body.removeChild(toast), 400);
-                }, 5000);
-            }
+            const skip = document.getElementById('skipPractice');
 
             const templates = {
                 'HTML': [
@@ -451,7 +418,7 @@ print(list_sum([2, 4, 6]))`
                     } else if (selectedLang === 'Python') {
                         writeConsole('Python execution is not enabled in this static build. Consider adding Pyodide to run Python in-browser.');
                     } else if (selectedLang === 'CSS') {
-                        writeConsole('CSS snippet saved — apply it inside an HTML file or use a live preview.');
+                        writeConsole('CSS snippet saved ΓÇö apply it inside an HTML file or use a live preview.');
                     } else {
                         writeConsole('Language not supported for run.');
                     }
@@ -607,7 +574,7 @@ print(list_sum([2, 4, 6]))`
                     const choice = mapped[cal.subject] || null;
                     if (choice && expectedSolutions[choice]) {
                         promptTitle.innerText = choice;
-                        promptText.innerText = `Practice topic from calendar: ${cal.subject} · ${cal.topic}`;
+                        promptText.innerText = `Practice topic from calendar: ${cal.subject} ┬╖ ${cal.topic}`;
                         lang.value = cal.subject === 'JS' ? 'JS' : cal.subject; // map
                         lang.disabled = false;
                         if (editor) editor.setValue(''); else answer.value = '';
@@ -644,9 +611,7 @@ print(list_sum([2, 4, 6]))`
                     console.error(e);
                 }
                 // go back to demo where updated streak will be visible
-                setTimeout(() => {
-                    window.location.href = 'demo.html';
-                }, 2000); // Give user enough time to see the toast before redirect
+                window.location.href = 'demo.html';
             }
 
             submit.addEventListener('click', () => {
@@ -679,16 +644,22 @@ print(list_sum([2, 4, 6]))`
                 const fb = document.getElementById('feedback');
                 if (result.ok) {
                     fb.style.display = 'block';
-                    fb.innerHTML = `<div style="color:#7cf596;font-weight:700;">Practice passed ✅</div><div style="margin-top:0.5rem;color:#bdc9ff">Great job — your submission met the checks.</div>`;
+                    fb.innerHTML = `<div style="color:#7cf596;font-weight:700;">Practice passed Γ£à</div><div style="margin-top:0.5rem;color:#bdc9ff">Great job ΓÇö your submission met the checks.</div>`;
                     // mark streak and return after short delay
                     setTimeout(() => completeStreakAndReturn(), 900);
                 } else {
                     fb.style.display = 'block';
-                    fb.innerHTML = `<div style="color:#ff7b7b;font-weight:700;">Practice needs work ✗</div>
+                    fb.innerHTML = `<div style="color:#ff7b7b;font-weight:700;">Practice needs work Γ£ù</div>
                         <div style="margin-top:0.5rem;color:#bdc9ff">Feedback:<ul style='color:#f1f6ff'>${result.feedback.map(f => `<li>${f}</li>`).join('')}</ul></div>
                         <details style="margin-top:0.6rem;color:#cfe2ff"><summary style="cursor:pointer;color:#9fb0ff">Show example solution</summary>
                             <pre style="background:#07102a;padding:0.6rem;border-radius:6px;overflow:auto;color:#e6ecff">${(result.sample || 'No sample available')}</pre>
                         </details>`;
+                }
+            });
+
+            skip.addEventListener('click', () => {
+                if (confirm('Skip this practice? It will not increase your streak.')) {
+                    window.location.href = 'demo.html';
                 }
             });
 
