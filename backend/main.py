@@ -745,9 +745,15 @@ def rag_process_video_endpoint(current_user):
         
     try:
         # Check if already exists
-        check = supabase.table("ai_video_table").select("id").eq("video_id", video_id).execute()
+        check = supabase.table("ai_video_table").select("id, status").eq("video_id", video_id).execute()
         if check.data:
-            supabase.table("ai_video_table").update({"transcript_raw": transcript, "status": "pending", "bucket_file_name": "", "bucket_file_url": ""}).eq("video_id", video_id).execute()
+            existing_status = check.data[0].get("status")
+            if existing_status == "processed":
+                return jsonify({"message": "This video's AI context is already present and processed!"}), 200
+            elif existing_status == "pending":
+                return jsonify({"message": "This video is already pending AI processing!"}), 200
+            else:
+                return jsonify({"message": "This video is already present in the AI system!"}), 200
         else:
             supabase.table("ai_video_table").insert({"video_id": video_id, "transcript_raw": transcript, "status": "pending", "bucket_file_name": "", "bucket_file_url": ""}).execute()
             
