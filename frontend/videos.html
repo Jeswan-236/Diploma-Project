@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Stalker - Video Resources</title>
+    <link rel="stylesheet" href="demo2.css">
+    <style>
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .video-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .video-content {
+            padding: 1rem;
+        }
+
+        .video-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .video-description {
+            font-size: 0.9rem;
+            color: #cccccc;
+            line-height: 1.4;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #ffffff;
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ff6b6b;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1rem;
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .modal-iframe {
+            width: 800px;
+            height: 450px;
+            border: none;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .modal-iframe {
+                width: 100%;
+                height: 250px;
+            }
+        }
+
+        .category-filter {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .category-btn {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin: 0.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn:hover,
+        .category-btn.active {
+            background: rgba(99, 102, 241, 0.5);
+            border-color: rgba(99, 102, 241, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; color: #ffffff; margin: 2rem 0;">Skill Stalker - Video Resources</h1>
+
+        <div class="category-filter">
+            <button class="category-btn active" onclick="filterVideos('')">All</button>
+            <button class="category-btn" onclick="filterVideos('coding')">Coding</button>
+            <button class="category-btn" onclick="filterVideos('maths')">Maths</button>
+            <button class="category-btn" onclick="filterVideos('science')">Science</button>
+        </div>
+
+        <div id="loading" class="loading">Loading videos...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="video-grid" class="video-grid"></div>
+    </div>
+
+    <div id="video-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <iframe id="video-iframe" class="modal-iframe" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; compute-pressure" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        let allVideos = [];
+        let currentCategory = '';
+
+        async function fetchAndDisplayVideos(category = '') {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const grid = document.getElementById('video-grid');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            grid.innerHTML = '';
+
+            try {
+                const url = category ? `http://127.0.0.1:8000/api/videos?category=${category}` : 'http://127.0.0.1:8000/api/videos';
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const videos = await response.json();
+                allVideos = videos;
+
+                displayVideos(videos);
+            } catch (err) {
+                console.error('Error fetching videos:', err);
+                error.textContent = 'Failed to load videos. Please try again later.';
+                error.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function displayVideos(videos) {
+            const grid = document.getElementById('video-grid');
+            grid.innerHTML = '';
+
+            videos.forEach(video => {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.onclick = () => openVideoModal(video.url);
+
+                const thumbnail = video.thumbnail_url || 'https://via.placeholder.com/300x180?text=No+Thumbnail';
+                const title = video.title || 'Untitled Video';
+                const description = video.description || 'No description available.';
+
+                card.innerHTML = `
+                    <img src="${thumbnail}" alt="${title}" class="video-thumbnail">
+                    <div class="video-content">
+                        <h3 class="video-title">${title}</h3>
+                        <p class="video-description">${description}</p>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function filterVideos(category) {
+            currentCategory = category;
+
+            // Update active button
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            fetchAndDisplayVideos(category);
+        }
+
+        function extractVideoId(url) {
+            // Handle various YouTube URL formats
+            const patterns = [
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&\n?#]+)/,
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^&\n?#]+)/,
+                /(?:https?:\/\/)?youtu\.be\/([^&\n?#]+)/,
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/([^&\n?#]+)/
+            ];
+
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) {
+                    return match[1];
+                }
+            }
+
+            // If no match, try to extract from search query URLs (fallback)
+            const searchMatch = url.match(/search_query=([^&]+)/);
+            if (searchMatch) {
+                // This might not work for search URLs, but we'll try
+                return decodeURIComponent(searchMatch[1]);
+            }
+
+            return null;
+        }
+
+        function openVideoModal(url) {
+            const videoId = extractVideoId(url);
+            if (!videoId) {
+                alert('Unable to extract video ID from URL');
+                return;
+            }
+
+            const iframe = document.getElementById('video-iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}`;
+
+            const modal = document.getElementById('video-modal');
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('video-modal');
+            modal.classList.remove('show');
+
+            const iframe = document.getElementById('video-iframe');
+            iframe.src = '';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('video-modal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeModal();
+            }
+        });
+
+        // Load videos on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndDisplayVideos();
+        });
+    </script>
+</body>
+</html>
