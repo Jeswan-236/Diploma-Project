@@ -38,6 +38,11 @@ CREATE POLICY "Allow service role full access" ON ai_video_table
     FOR ALL
     USING (auth.role() = 'service_role');
 
+-- Allow anon role full access for batch processing
+CREATE POLICY "Allow anon full access" ON ai_video_table
+    FOR ALL
+    USING (auth.role() = 'anon');
+
 -- =======================================================================
 -- NOTE: You must also create the Supabase Storage bucket manually:
 --
